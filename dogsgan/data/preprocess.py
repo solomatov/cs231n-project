@@ -1,18 +1,15 @@
-from pathlib import Path
 from lxml import etree
 from PIL import Image
 
-data_dir = Path('data')
-image_dir = data_dir / 'Images'
-annotation_dir = data_dir / 'Annotation'
-preprocessed_dir = data_dir / 'Preprocessed'
+from dogsgan.data.common import image_dir, annotation_dir, preprocessed_dir
 
 target_size = (128, 128)
-
 
 def annotated_images():
     for image in image_dir.glob('**/*.jpg'):
         name = image.stem
+        cls = image.parent.stem
+
         parent_relative = image.parent.relative_to(image_dir)
         annotation = annotation_dir / parent_relative / name
 
@@ -27,14 +24,14 @@ def annotated_images():
             xmax = get_int_attr('xmax')
             ymax = get_int_attr('ymax')
 
-        yield image, (xmin, ymin, xmax, ymax)
+        yield image, cls, (xmin, ymin, xmax, ymax)
 
 
 if __name__ == '__main__':
     preprocessed_dir.mkdir(exist_ok=True)
 
     n = 0
-    for i, bounds in annotated_images():
+    for i, c, bounds in annotated_images():
         if n % 1000 == 0:
             print(n)
 
@@ -47,7 +44,8 @@ if __name__ == '__main__':
         result = crop.resize(target_size)
         result = result.convert("RGB")
 
-        target = preprocessed_dir / f'{n:06}.jpeg'
+        (preprocessed_dir / c).mkdir(exist_ok=True)
+        target = preprocessed_dir / c / f'{n:06}.jpeg'
         result.save(str(target), quality=95)
 
         n += 1

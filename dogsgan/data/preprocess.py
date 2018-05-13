@@ -1,9 +1,8 @@
 from lxml import etree
 from PIL import Image
 
-from dogsgan.data.common import image_dir, annotation_dir, preprocessed_dir
+from dogsgan.data.common import image_dir, annotation_dir, preprocessed_dir, image_size
 
-target_size = (128, 128)
 
 def annotated_images():
     for image in image_dir.glob('**/*.jpg'):
@@ -41,7 +40,7 @@ if __name__ == '__main__':
         min_dim = min(xmax - xmin, ymax - ymin)
         crop = im.crop((xmin, ymin, xmin + min_dim, ymin + min_dim))
 
-        result = crop.resize(target_size)
+        result = crop.resize(image_size)
         result = result.convert("RGB")
 
         (preprocessed_dir / c).mkdir(exist_ok=True)

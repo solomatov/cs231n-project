@@ -24,10 +24,10 @@ class Generator(nn.Module):
         base = self.base
 
         self.noise_project = nn.Linear(NOISE_DIM, 4 * 4 * base * 8)
-        self.conv1 = nn.ConvTranspose2d(base * 8, base * 4, (4, 4), stride=2, padding=1)
-        self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (4, 4), stride=2, padding=1)
-        self.conv3 = nn.ConvTranspose2d(base * 2, base, (4, 4), stride=2, padding=1)
-        self.conv4 = nn.ConvTranspose2d(base, 3, (4, 4), stride=2, padding=1)
+        self.conv1 = nn.ConvTranspose2d(base * 8, base * 4, (5, 5), stride=2, padding=2, output_padding=1)
+        self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (5, 5), stride=2, padding=2, output_padding=1)
+        self.conv3 = nn.ConvTranspose2d(base * 2, base, (5, 5), stride=2, padding=2, output_padding=1)
+        self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
     def forward(self, z):
         z0 = self.noise_project(z).view(-1, self.base * 8, 4, 4)
@@ -45,10 +45,10 @@ class Discriminator(nn.Module):
         self.base = BASE_DIM
         base = self.base
 
-        self.conv1 = nn.Conv2d(3, base, (4, 4), padding=1, stride=2)
-        self.conv2 = nn.Conv2d(base, base * 2, (4, 4), padding=1, stride=2)
-        self.conv3 = nn.Conv2d(base * 2, base * 4, (4, 4), padding=1, stride=2)
-        self.conv4 = nn.Conv2d(base * 4, base * 8, (4, 4), padding=1, stride=2)
+        self.conv1 = nn.Conv2d(3, base, (5, 5), padding=2, stride=2)
+        self.conv2 = nn.Conv2d(base, base * 2, (5, 5), padding=2, stride=2)
+        self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
+        self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
     def forward(self, x):

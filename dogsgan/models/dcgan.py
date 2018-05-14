@@ -1,16 +1,21 @@
 import torch
+import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
+import torchvision
+
+from dogsgan.data.loader import create_loader
 
 ALPHA = 0.02
+NOISE_DIM = 100
 
 
 class Generator(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.noise_project = nn.Linear(100, 4 * 4 * 1024)
+        self.noise_project = nn.Linear(NOISE_DIM, 4 * 4 * 1024)
         self.conv1 = nn.ConvTranspose2d(1024, 512, (4, 4), stride=2, padding=1)
         self.conv2 = nn.ConvTranspose2d(512, 256, (4, 4), stride=2, padding=1)
         self.conv3 = nn.ConvTranspose2d(256, 128, (4, 4), stride=2, padding=1)
@@ -47,6 +52,42 @@ if __name__ == '__main__':
     gen = Generator()
     dsc = Discriminator()
 
-    print(gen(torch.empty(1, 100).uniform_(0, 1)).shape)
-    print(dsc(torch.empty(1, 3, 64, 64).uniform_(0, 1)).shape)
+    loader = create_loader()
 
+    dsc_opt = optim.Adam(dsc.parameters())
+    gen_opt = optim.Adam(gen.parameters())
+
+    for e in range(1000):
+        for i, (X_real, _) in enumerate(loader):
+            dsc.zero_grad()
+
+            N = X_real.shape[0]
+            X_fake = gen(torch.randn((N, NOISE_DIM)))
+            y_fake = torch.zeros((N, 1))
+            y_real = torch.ones((N, 1))
+
+            X = torch.cat([X_real, X_fake])
+            y = torch.cat([y_real, y_fake])
+            y_ = dsc(X)
+
+            dsc_loss = F.binary_cross_entropy(y_, y)
+            print(f'dsc loss = {dsc_loss:.2f}')
+
+            dsc_loss.backward()
+            dsc_opt.step()
+
+            gen.zero_grad()
+            X_fake = gen(torch.randn((N, NOISE_DIM)))
+            y_ = dsc(X_fake)
+
+            gen_loss = F.binary_cross_entropy(y_, torch.ones((N, 1)))
+            print(f'gen loss = {gen_loss:.2f}')
+
+            gen_loss.backward()
+            gen_opt.step()
+
+            if i % 100 == 0:
+                print('saving sample...')
+                sample = gen(torch.randn((100, NOISE_DIM)))
+                torchvision.utils.save_image(sample, f'out/out-{i}.png', normalize=True)
+                print('done')

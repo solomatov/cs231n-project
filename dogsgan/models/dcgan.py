@@ -12,6 +12,7 @@ NOISE_DIM = 128
 LABEL_NOISE = 0.1
 BASE_DIM = 128
 
+
 def lrelu(x):
     return F.leaky_relu(x, ALPHA)
 
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     dsc_opt = optim.Adam(dsc.parameters(), lr=0.0002, betas=(0.5, 0.999))
     gen_opt = optim.Adam(gen.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
-    vis_params = torch.randn((100, NOISE_DIM)).to(device)
+    vis_params = torch.randn((104, NOISE_DIM)).to(device)
 
     for e in range(1000):
         for i, (X_real, _) in enumerate(loader):

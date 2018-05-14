@@ -8,9 +8,9 @@ import torchvision
 from dogsgan.data.loader import create_loader
 
 ALPHA = 0.02
-NOISE_DIM = 1024
-LABEL_NOISE = 0.4
-BASE_DIM = 256
+NOISE_DIM = 128
+LABEL_NOISE = 0.1
+BASE_DIM = 128
 
 def lrelu(x):
     return F.leaky_relu(x, ALPHA)

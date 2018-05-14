@@ -106,5 +106,5 @@ if __name__ == '__main__':
 
         print('saving sample...')
         sample = gen(torch.randn((100, NOISE_DIM)).to(device))
-        torchvision.utils.save_image(sample, f'out/out-{e:03}.png', normalize=True)
+        torchvision.utils.save_image(sample, f'out/out-{e:04}.png', normalize=True)
         print('done')

@@ -94,10 +94,10 @@ if __name__ == '__main__':
 
             dsc.zero_grad()
             gen.zero_grad()
-            X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
+            X_fake = gen(torch.randn((N * 2, NOISE_DIM)).to(device))
             y_ = dsc(X_fake)
 
-            gen_loss = F.binary_cross_entropy(y_, torch.ones((N, 1)).to(device))
+            gen_loss = F.binary_cross_entropy(y_, (1.0 - torch.rand((N * 2, 1)) * (LABEL_NOISE / 2)).to(device))
             gen_loss.backward()
             gen_opt.step()
 

@@ -15,7 +15,7 @@ def create_loader(batch_size=128):
     ])
 
     dataset = datasets.ImageFolder(str(preprocessed_dir), transform=trans)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
 
 if __name__ == '__main__':

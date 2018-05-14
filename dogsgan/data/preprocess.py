@@ -40,7 +40,7 @@ if __name__ == '__main__':
         min_dim = min(xmax - xmin, ymax - ymin)
         crop = im.crop((xmin, ymin, xmin + min_dim, ymin + min_dim))
 
-        result = crop.resize(image_size)
+        result = crop.resize(image_size, Image.ANTIALIAS)
         result = result.convert("RGB")
 
         (preprocessed_dir / c).mkdir(exist_ok=True)

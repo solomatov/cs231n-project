@@ -10,7 +10,7 @@ from dogsgan.data.loader import create_loader
 ALPHA = 0.02
 NOISE_DIM = 1024
 LABEL_NOISE = 0.4
-
+BASE_DIM = 256
 
 def lrelu(x):
     return F.leaky_relu(x, ALPHA)
@@ -20,7 +20,7 @@ class Generator(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.base = 128
+        self.base = BASE_DIM
         base = self.base
 
         self.noise_project = nn.Linear(NOISE_DIM, 4 * 4 * base * 8)
@@ -42,7 +42,7 @@ class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.base = 128
+        self.base = BASE_DIM
         base = self.base
 
         self.conv1 = nn.Conv2d(3, base, (4, 4), padding=1, stride=2)
@@ -71,8 +71,10 @@ if __name__ == '__main__':
 
     loader = create_loader()
 
-    dsc_opt = optim.Adam(dsc.parameters())
-    gen_opt = optim.Adam(gen.parameters())
+    dsc_opt = optim.Adam(dsc.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    gen_opt = optim.Adam(gen.parameters(), lr=0.0002, betas=(0.5, 0.999))
+
+    vis_params = torch.randn((100, NOISE_DIM)).to(device)
 
     for e in range(1000):
         for i, (X_real, _) in enumerate(loader):
@@ -94,10 +96,10 @@ if __name__ == '__main__':
 
             dsc.zero_grad()
             gen.zero_grad()
-            X_fake = gen(torch.randn((N * 2, NOISE_DIM)).to(device))
+            X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
             y_ = dsc(X_fake)
 
-            gen_loss = F.binary_cross_entropy(y_, (1.0 - torch.rand((N * 2, 1)) * (LABEL_NOISE / 2)).to(device))
+            gen_loss = F.binary_cross_entropy(y_, (1.0 - torch.rand((N, 1)) * (LABEL_NOISE / 2)).to(device))
             gen_loss.backward()
             gen_opt.step()
 
@@ -105,6 +107,6 @@ if __name__ == '__main__':
                 print(f'{e:04}:{i:04}: Losses: dsc = {dsc_loss:.4f}, gen = {gen_loss:.4f}')
 
         print('saving sample...')
-        sample = gen(torch.randn((100, NOISE_DIM)).to(device))
+        sample = gen(vis_params)
         torchvision.utils.save_image(sample, f'out/out-{e:04}.png', normalize=True)
         print('done')

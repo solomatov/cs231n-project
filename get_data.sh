@@ -1,3 +1,4 @@
+mkdir -p data
 pushd data
 wget http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar
 wget http://vision.stanford.edu/aditya86/ImageNetDogs/annotation.tar

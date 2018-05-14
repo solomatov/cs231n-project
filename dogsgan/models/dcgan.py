@@ -57,6 +57,10 @@ if __name__ == '__main__':
     dsc_opt = optim.Adam(dsc.parameters())
     gen_opt = optim.Adam(gen.parameters())
 
+    if torch.cuda.device_count() > 0:
+        gen = gen.cuda()
+        dsc = dsc.cude()
+
     for e in range(1000):
         for i, (X_real, _) in enumerate(loader):
             dsc.zero_grad()

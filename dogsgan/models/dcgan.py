@@ -7,9 +7,9 @@ import torchvision
 
 from dogsgan.data.loader import create_loader
 
-ALPHA = 0.02
-NOISE_DIM = 128
-LABEL_NOISE = 0.1
+ALPHA = 0.2
+NOISE_DIM = 100
+LABEL_NOISE = 0.0
 BASE_DIM = 128
 
 
@@ -31,7 +31,7 @@ class Generator(nn.Module):
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
     def forward(self, z):
-        z0 = self.noise_project(z).view(-1, self.base * 8, 4, 4)
+        z0 = lrelu(self.noise_project(z).view(-1, self.base * 8, 4, 4))
         z1 = lrelu(self.conv1(z0))
         z2 = lrelu(self.conv2(z1))
         z3 = lrelu(self.conv3(z2))

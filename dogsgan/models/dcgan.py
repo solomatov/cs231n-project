@@ -9,7 +9,7 @@ from dogsgan.data.loader import create_loader
 
 ALPHA = 0.2
 NOISE_DIM = 100
-LABEL_NOISE = 0.0
+LABEL_NOISE = 0.1
 BASE_DIM = 128
 
 
@@ -88,7 +88,7 @@ if __name__ == '__main__':
             y_real = (1.0 - torch.rand((N, 1)) * LABEL_NOISE).to(device)
 
             X = torch.cat([X_real, X_fake])
-            y = torch.cat([y_real, y_fake])
+            y = torch.cat([y_real, y_fake]).clamp(min=1e-5, max=1.0)
             y_ = dsc(X)
 
             dsc_loss = F.binary_cross_entropy(y_, y)
@@ -100,7 +100,7 @@ if __name__ == '__main__':
             X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
             y_ = dsc(X_fake)
 
-            gen_loss = F.binary_cross_entropy(y_, (1.0 - torch.rand((N, 1)) * (LABEL_NOISE / 2)).to(device))
+            gen_loss = F.binary_cross_entropy(y_, (1.0 - torch.rand((N, 1)) * (LABEL_NOISE / 2)).clamp(min=1e-5, max=1.0).to(device))
             gen_loss.backward()
             gen_opt.step()
 

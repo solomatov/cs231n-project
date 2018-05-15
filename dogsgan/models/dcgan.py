@@ -11,10 +11,20 @@ ALPHA = 0.2
 NOISE_DIM = 100
 LABEL_NOISE = 0.1
 BASE_DIM = 128
+WEIGHT_STD = 0.02
 
 
 def lrelu(x):
     return F.leaky_relu(x, ALPHA)
+
+
+def init_weight(layer):
+    layer.weight.data.normal_(0.0, WEIGHT_STD)
+
+
+def init_weights(module):
+    for c in module.children():
+        init_weight(c)
 
 
 class Generator(nn.Module):
@@ -29,6 +39,8 @@ class Generator(nn.Module):
         self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (5, 5), stride=2, padding=2, output_padding=1)
         self.conv3 = nn.ConvTranspose2d(base * 2, base, (5, 5), stride=2, padding=2, output_padding=1)
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
+
+        init_weights(self)
 
     def forward(self, z):
         z0 = lrelu(self.noise_project(z).view(-1, self.base * 8, 4, 4))
@@ -51,6 +63,8 @@ class Discriminator(nn.Module):
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
+
+        init_weights(self)
 
     def forward(self, x):
         z1 = lrelu(self.conv1(x))

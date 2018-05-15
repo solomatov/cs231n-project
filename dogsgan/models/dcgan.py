@@ -9,7 +9,7 @@ from dogsgan.data.loader import create_loader
 
 ALPHA = 0.2
 NOISE_DIM = 100
-LABEL_NOISE = 0.1
+LABEL_NOISE = 0.05
 BASE_DIM = 128
 WEIGHT_STD = 0.02
 

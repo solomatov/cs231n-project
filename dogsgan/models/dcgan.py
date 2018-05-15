@@ -13,6 +13,9 @@ LABEL_NOISE = 0.1
 BASE_DIM = 128
 WEIGHT_STD = 0.02
 
+ZERO_LABEL_MEAN = 2 * LABEL_NOISE
+ONE_LABEL_MEAN = 1.0 - 2 * LABEL_NOISE
+
 
 def lrelu(x):
     return F.leaky_relu(x, ALPHA)
@@ -25,6 +28,11 @@ def init_weight(layer):
 def init_weights(module):
     for c in module.children():
         init_weight(c)
+
+
+def gen_labels(shape, mean):
+    result = torch.randn(shape) * WEIGHT_STD + mean
+    return result.clamp(min=1e-7, max=1.0)
 
 
 class Generator(nn.Module):
@@ -98,8 +106,8 @@ if __name__ == '__main__':
             N = X_real.shape[0]
             X_real = X_real.to(device)
             X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
-            y_fake = (torch.rand((N, 1)) * LABEL_NOISE).to(device)
-            y_real = (1.0 - torch.rand((N, 1)) * LABEL_NOISE).to(device)
+            y_fake = gen_labels((N, 1), ZERO_LABEL_MEAN).to(device)
+            y_real = gen_labels((N, 1), ONE_LABEL_MEAN).to(device)
 
             X = torch.cat([X_real, X_fake])
             y = torch.cat([y_real, y_fake])
@@ -114,7 +122,7 @@ if __name__ == '__main__':
             X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
             y_ = dsc(X_fake)
 
-            gen_loss = F.binary_cross_entropy(y_, (1.0 - torch.rand((N, 1)) * (LABEL_NOISE / 2)).to(device))
+            gen_loss = F.binary_cross_entropy(y_, gen_labels((N, 1), ONE_LABEL_MEAN).to(device))
             gen_loss.backward()
             gen_opt.step()
 

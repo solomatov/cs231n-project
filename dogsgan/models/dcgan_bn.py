@@ -53,7 +53,6 @@ class Generator(nn.Module):
         self.bn3 = nn.BatchNorm2d(base)
 
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn4 = nn.BatchNorm2d(3)
 
         init_weights(self)
 
@@ -62,7 +61,7 @@ class Generator(nn.Module):
         z1 = lrelu(self.bn1(self.conv1(z0)))
         z2 = lrelu(self.bn2(self.conv2(z1)))
         z3 = lrelu(self.bn3(self.conv3(z2)))
-        z4 = lrelu(self.bn4(self.conv4(z3)))
+        z4 = lrelu(self.conv4(z3))
         return F.tanh(z4)
 
 
@@ -83,7 +82,6 @@ class Discriminator(nn.Module):
         self.bn3 = nn.BatchNorm2d(base * 4)
 
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
-        self.bn4 = nn.BatchNorm2d(base * 8)
 
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
@@ -93,7 +91,7 @@ class Discriminator(nn.Module):
         z1 = lrelu(self.bn1(self.conv1(x)))
         z2 = lrelu(self.bn2(self.conv2(z1)))
         z3 = lrelu(self.bn3(self.conv3(z2)))
-        z4 = lrelu(self.bn4(self.conv4(z3)))
+        z4 = lrelu(self.conv4(z3))
         return F.sigmoid(self.collapse(z4.view(-1, (self.base * 8) * 4 * 4)))
 
 

@@ -122,7 +122,7 @@ if __name__ == '__main__':
             X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
             y_ = dsc(X_fake)
 
-            gen_loss = F.binary_cross_entropy(y_, gen_labels((N, 1), ONE_LABEL_MEAN).to(device))
+            gen_loss = -torch.mean(torch.log(y_))
             gen_loss.backward()
             gen_opt.step()
 

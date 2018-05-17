@@ -14,6 +14,7 @@ LABEL_NOISE = 0.00
 BASE_DIM = 128
 WEIGHT_STD = 0.02
 BASE_LR_128 = 0.0002
+GRADIENT_CLIP = 10.0
 
 ZERO_LABEL_MEAN = 2 * LABEL_NOISE
 ONE_LABEL_MEAN = 1.0 - 2 * LABEL_NOISE
@@ -119,6 +120,7 @@ if __name__ == '__main__':
 
             dsc_loss = F.binary_cross_entropy(y_, y)
             dsc_loss.backward()
+            nn.utils.clip_grad_norm_(dsc.parameters(), GRADIENT_CLIP)
             dsc_opt.step()
 
             dsc.zero_grad()
@@ -128,6 +130,7 @@ if __name__ == '__main__':
 
             gen_loss = -torch.mean(torch.log(y_))
             gen_loss.backward()
+            nn.utils.clip_grad_norm_(gen.parameters(), GRADIENT_CLIP)
             gen_opt.step()
 
             if i % 10 == 0:

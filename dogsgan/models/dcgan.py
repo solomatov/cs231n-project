@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
 
-    dsc_opt = optim.Adam(dsc.parameters(), lr=scaled_lr / 12, betas=(0.5, 0.999))
+    dsc_opt = optim.Adam(dsc.parameters(), lr=scaled_lr / 8, betas=(0.5, 0.999))
     gen_opt = optim.Adam(gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
 
     vis_params = torch.randn((104, NOISE_DIM)).to(device)

@@ -8,11 +8,12 @@ import torchvision
 from dogsgan.data.loader import create_loader
 
 ALPHA = 0.2
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 NOISE_DIM = 100
 LABEL_NOISE = 0.00
 BASE_DIM = 128
 WEIGHT_STD = 0.02
+BASE_LR_128 = 0.0002
 
 ZERO_LABEL_MEAN = 2 * LABEL_NOISE
 ONE_LABEL_MEAN = 1.0 - 2 * LABEL_NOISE
@@ -95,8 +96,10 @@ if __name__ == '__main__':
 
     loader = create_loader(batch_size=BATCH_SIZE)
 
-    dsc_opt = optim.Adam(dsc.parameters(), lr=0.00005, betas=(0.5, 0.999))
-    gen_opt = optim.Adam(gen.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
+
+    dsc_opt = optim.Adam(dsc.parameters(), lr=scaled_lr / 12, betas=(0.5, 0.999))
+    gen_opt = optim.Adam(gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
 
     vis_params = torch.randn((104, NOISE_DIM)).to(device)
 

@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
 
-    dsc_opt = optim.Adam(dsc.parameters(), lr=scaled_lr / 8, betas=(0.5, 0.999))
+    dsc_opt = optim.Adam(dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
     gen_opt = optim.Adam(gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
 
     vis_params = torch.randn((104, NOISE_DIM)).to(device)
@@ -120,7 +120,6 @@ if __name__ == '__main__':
 
             dsc_loss = F.binary_cross_entropy(y_, y)
             dsc_loss.backward()
-            nn.utils.clip_grad_norm_(dsc.parameters(), GRADIENT_CLIP)
             dsc_opt.step()
 
             dsc.zero_grad()
@@ -130,7 +129,6 @@ if __name__ == '__main__':
 
             gen_loss = -torch.mean(torch.log(y_))
             gen_loss.backward()
-            nn.utils.clip_grad_norm_(gen.parameters(), GRADIENT_CLIP)
             gen_opt.step()
 
             if i % 10 == 0:

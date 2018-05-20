@@ -1,4 +1,7 @@
 data/*
 cache/*
 .idea/*
+.code/*
 sync.sh
+__pycache__
+**/*.pyc

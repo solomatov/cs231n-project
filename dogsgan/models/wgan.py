@@ -30,15 +30,18 @@ class Generator(nn.Module):
 
         self.noise_project = nn.Linear(NOISE_DIM, 4 * 4 * base * 8)
         self.conv1 = nn.ConvTranspose2d(base * 8, base * 4, (5, 5), stride=2, padding=2, output_padding=1)
+        self.bn1 = nn.BatchNorm2d(base * 4)
         self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (5, 5), stride=2, padding=2, output_padding=1)
+        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.ConvTranspose2d(base * 2, base, (5, 5), stride=2, padding=2, output_padding=1)
+        self.bn3 = nn.BatchNorm2d(base)
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
     def forward(self, z):
         z0 = lrelu(self.noise_project(z).view(-1, self.base * 8, 4, 4))
-        z1 = lrelu(self.conv1(z0))
-        z2 = lrelu(self.conv2(z1))
-        z3 = lrelu(self.conv3(z2))
+        z1 = lrelu(self.bn1(self.conv1(z0)))
+        z2 = lrelu(self.bn2(self.conv2(z1)))
+        z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = lrelu(self.conv4(z3))
         return F.tanh(z4)
 

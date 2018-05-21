@@ -3,9 +3,8 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
-import torchvision
+from dogsgan.infra.runner import TrainingRunner
 
-from dogsgan.data.loader import create_loader
 
 ALPHA = 0.2
 BATCH_SIZE = 128
@@ -85,56 +84,55 @@ class Discriminator(nn.Module):
         return F.sigmoid(self.collapse(z4.view(-1, (self.base * 8) * 4 * 4)))
 
 
-if __name__ == '__main__':
-    has_cuda = torch.cuda.device_count() > 0
-    if has_cuda:
-        device = torch.device('cuda:0')
-    else:
-        device = torch.device('cpu:0')
+class DCGANRunner(TrainingRunner):
+    def __init__(self):
+        super().__init__('dcgan')
+        self.gen = Generator().to(self.device)
+        self.dsc = Discriminator().to(self.device)
 
-    gen = Generator().to(device)
-    dsc = Discriminator().to(device)
+        scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
+        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
+        self.gen_opt = optim.Adam(self.gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
 
-    loader = create_loader(batch_size=BATCH_SIZE)
+        self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
 
-    scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
-
-    dsc_opt = optim.Adam(dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
-    gen_opt = optim.Adam(gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
-
-    vis_params = torch.randn((104, NOISE_DIM)).to(device)
-
-    for e in range(1000):
-        for i, (X_real, _) in enumerate(loader):
-            dsc.zero_grad()
+    def run_epoch(self, it):
+        for X_real, _ in it:
+            self.dsc.zero_grad()
 
             N = X_real.shape[0]
-            X_real = X_real.to(device)
-            X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
-            y_fake = gen_labels((N, 1), ZERO_LABEL_MEAN).to(device)
-            y_real = gen_labels((N, 1), ONE_LABEL_MEAN).to(device)
+            X_real = X_real.to(self.device)
+            X_fake = self.gen(torch.randn((N, NOISE_DIM)).to(self.device))
+            y_fake = gen_labels((N, 1), ZERO_LABEL_MEAN).to(self.device)
+            y_real = gen_labels((N, 1), ONE_LABEL_MEAN).to(self.device)
 
             X = torch.cat([X_real, X_fake])
             y = torch.cat([y_real, y_fake])
-            y_ = dsc(X)
+            y_ = self.dsc(X)
 
             dsc_loss = F.binary_cross_entropy(y_, y)
             dsc_loss.backward()
-            dsc_opt.step()
+            self.dsc_opt.step()
 
-            dsc.zero_grad()
-            gen.zero_grad()
-            X_fake = gen(torch.randn((N, NOISE_DIM)).to(device))
-            y_ = dsc(X_fake)
+            self.dsc.zero_grad()
+            self.gen.zero_grad()
+            X_fake = self.gen(torch.randn((N, NOISE_DIM)).to(self.device))
+            y_ = self.dsc(X_fake)
 
             gen_loss = -torch.mean(torch.log(y_))
             gen_loss.backward()
-            gen_opt.step()
+            self.gen_opt.step()
 
-            if i % 10 == 0:
-                print(f'{e:04}:{i:04}: Losses: dsc = {dsc_loss:.4f}, gen = {gen_loss:.4f}')
+    def sample_images(self):
+        return self.gen(self.vis_params)
 
-        print('saving sample...')
-        sample = gen(vis_params)
-        torchvision.utils.save_image(sample, f'out/out-{e:04}.png', normalize=True)
-        print('done')
+    def get_snapshot(self):
+        return {
+            'gen': self.gen,
+            'dsc': self.dsc
+        }
+
+
+if __name__ == '__main__':
+    runner = DCGANRunner()
+    runner.run(batch_size=BATCH_SIZE)

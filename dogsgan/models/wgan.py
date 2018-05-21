@@ -3,9 +3,6 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
-import torchvision
-
-from dogsgan.data.loader import create_loader
 from dogsgan.infra.runner import TrainingRunner
 
 
@@ -123,6 +120,7 @@ class WGANTrainingRunner(TrainingRunner):
             'gen': self.gen,
             'critic': self.critic
         }
+
 
 if __name__ == '__main__':
     runner = WGANTrainingRunner()

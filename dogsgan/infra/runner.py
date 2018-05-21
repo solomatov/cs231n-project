@@ -14,7 +14,7 @@ out_root = Path('out')
 
 class TrainingRunner:
     def __init__(self, name):
-        self.out_dir = out_root / f'{name}-{datetime.datetime.now():%Y%m%d%H%M%S}'
+        self.out_dir = out_root / f'{name}-{datetime.datetime.now():%Y%m%d-%H%M%S}'
         has_cuda = torch.cuda.device_count() > 0
         if has_cuda:
             self.device = torch.device('cuda:0')
@@ -43,14 +43,15 @@ class TrainingRunner:
     def save_snapshot(self, e):
         snapshot = self.out_dir / 'current.snapshot'
         snapshot_backup = self.out_dir / 'current.snapshot.backup'
+
         if snapshot.exists():
             shutil.move(str(snapshot), snapshot_backup)
-        snapshot = self.get_snapshot()
 
+        data = self.get_snapshot()
         torch.save({
             'epoch': e,
-            'data': snapshot
-        }, snapshot_backup)
+            'data': data
+        }, snapshot)
 
         if snapshot_backup.exists():
             snapshot_backup.unlink()

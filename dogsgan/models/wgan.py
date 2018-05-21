@@ -46,7 +46,7 @@ class Generator(nn.Module):
         return F.tanh(z4)
 
 
-class Discriminator(nn.Module):
+class Critic(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -79,13 +79,13 @@ if __name__ == '__main__':
         device = torch.device('cpu:0')
 
     gen = Generator().to(device)
-    dsc = Discriminator().to(device)
-    for p in dsc.parameters():
+    critic = Critic().to(device)
+    for p in critic.parameters():
         p.data.clamp_(-CLIP, CLIP)
 
     loader = create_loader(batch_size=BATCH_SIZE)
 
-    dsc_opt = optim.RMSprop(dsc.parameters(), lr=LEARNING_RATE)
+    critic_opt = optim.RMSprop(critic.parameters(), lr=LEARNING_RATE)
     gen_opt = optim.RMSprop(gen.parameters(), lr=LEARNING_RATE)
 
     vis_params = torch.randn((104, NOISE_DIM)).to(device)
@@ -98,33 +98,32 @@ if __name__ == '__main__':
             try:
                 for _ in range(N_CRITIC):
                     X_real, _ = it.next()
-                    dsc.zero_grad()
+                    critic.zero_grad()
                     gen.zero_grad()
                     X_real = X_real.to(device)
                     X_fake = gen(torch.randn((X_real.shape[0], NOISE_DIM)).to(device))
-                    dsc_f = dsc(X_fake)
-                    dsc_r = dsc(X_real)
-                    dsc_loss = torch.mean(dsc_f) - torch.mean(dsc_r)
-                    dsc_loss.backward()
-                    dsc_opt.step()
+                    critic_f = critic(X_fake)
+                    critic_r = critic(X_real)
+                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
+                    critic_loss.backward()
+                    critic_opt.step()
 
-                    for p in dsc.parameters():
+                    for p in critic.parameters():
                         p.data.clamp_(-CLIP, CLIP)
 
-                dsc.zero_grad()
+                critic.zero_grad()
                 gen.zero_grad()
                 noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(device)
-                gen_loss = -torch.mean(dsc(gen(noise)))
+                gen_loss = -torch.mean(critic(gen(noise)))
                 gen_loss.backward()
                 gen_opt.step()
 
                 if i % 10 == 0:
-                    print(f'{e:04}:{i:04}: Losses: dsc = {dsc_loss:.4f}, gen = {gen_loss:.4f}')
+                    print(f'{e:04}:{i:04}: Losses: dsc = {critic_loss:.4f}, gen = {gen_loss:.4f}')
 
                 i += 1
             except StopIteration:
                 break
-
 
         print('saving sample...')
         sample = gen(vis_params)

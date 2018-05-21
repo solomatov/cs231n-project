@@ -87,7 +87,7 @@ class WGANTrainingRunner(TrainingRunner):
 
         self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
 
-    def run_epoch(self, it):
+    def run_epoch(self, it, context):
         while True:
             try:
                 for _ in range(N_CRITIC):
@@ -109,6 +109,11 @@ class WGANTrainingRunner(TrainingRunner):
                 gen_loss = -torch.mean(self.critic(self.gen(noise)))
                 gen_loss.backward()
                 self.gen_opt.step()
+
+                context.add_scalar('critic_loss', critic_loss)
+                context.add_scalar('gen_loss', gen_loss)
+
+                context.inc_iter()
             except StopIteration:
                 break
 

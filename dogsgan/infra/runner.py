@@ -1,6 +1,7 @@
 from pathlib import Path
 import shutil
 import datetime
+import hashlib
 import torchvision
 from tqdm import tqdm
 
@@ -14,7 +15,8 @@ out_root = Path('out')
 
 class TrainingRunner:
     def __init__(self, name):
-        self.out_dir = out_root / f'{name}-{datetime.datetime.now():%Y%m%d-%H%M%S}'
+        now = datetime.datetime.now()
+        self.out_dir = out_root / f'{name}-{now:%Y%m%d-%H%M-%S}'
         has_cuda = torch.cuda.device_count() > 0
         if has_cuda:
             self.device = torch.device('cuda:0')
@@ -38,7 +40,7 @@ class TrainingRunner:
     def save_image_sample(self, e):
         sample = self.sample_images()
         image_path = self.out_dir / f'sample-{e:05}.png'
-        torchvision.utils.save_image(sample, str(image_path), normalize=True)
+        torchvision.utils.save_image(sample, str(image_path).encode('ascii'), normalize=True)
 
     def save_snapshot(self, e):
         snapshot = self.out_dir / 'current.snapshot'

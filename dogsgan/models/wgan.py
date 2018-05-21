@@ -6,6 +6,8 @@ import torch.nn.functional as F
 import torchvision
 
 from dogsgan.data.loader import create_loader
+from dogsgan.infra.runner import TrainingRunner
+
 
 ALPHA = 0.2
 BATCH_SIZE = 64
@@ -63,6 +65,8 @@ class Critic(nn.Module):
         self.bn4 = nn.BatchNorm2d(base * 8)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
+        self.clip()
+
     def forward(self, x):
         z1 = lrelu(self.bn1(self.conv1(x)))
         z2 = lrelu(self.bn2(self.conv2(z1)))
@@ -70,62 +74,56 @@ class Critic(nn.Module):
         z4 = lrelu(self.bn4(self.conv4(z3)))
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
 
+    def clip(self):
+        for p in self.parameters():
+            p.data.clamp_(-CLIP, CLIP)
 
-if __name__ == '__main__':
-    has_cuda = torch.cuda.device_count() > 0
-    if has_cuda:
-        device = torch.device('cuda:0')
-    else:
-        device = torch.device('cpu:0')
 
-    gen = Generator().to(device)
-    critic = Critic().to(device)
-    for p in critic.parameters():
-        p.data.clamp_(-CLIP, CLIP)
+class WGANTrainingRunner(TrainingRunner):
+    def __init__(self):
+        super().__init__('wgan')
+        self.gen = Generator().to(self.device)
+        self.critic = Critic().to(self.device)
 
-    loader = create_loader(batch_size=BATCH_SIZE)
+        self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE)
+        self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
 
-    critic_opt = optim.RMSprop(critic.parameters(), lr=LEARNING_RATE)
-    gen_opt = optim.RMSprop(gen.parameters(), lr=LEARNING_RATE)
+        self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
 
-    vis_params = torch.randn((104, NOISE_DIM)).to(device)
-    for e in range(1000):
-
-        it = iter(loader)
-
-        i = 0
+    def run_epoch(self, it):
         while True:
             try:
                 for _ in range(N_CRITIC):
-                    X_real, _ = it.next()
-                    critic.zero_grad()
-                    gen.zero_grad()
-                    X_real = X_real.to(device)
-                    X_fake = gen(torch.randn((X_real.shape[0], NOISE_DIM)).to(device))
-                    critic_f = critic(X_fake)
-                    critic_r = critic(X_real)
+                    X_real, _ = next(it)
+                    self.critic.zero_grad()
+                    self.gen.zero_grad()
+                    X_real = X_real.to(self.device)
+                    X_fake = self.gen(torch.randn((X_real.shape[0], NOISE_DIM)).to(self.device))
+                    critic_f = self.critic(X_fake)
+                    critic_r = self.critic(X_real)
                     critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
                     critic_loss.backward()
-                    critic_opt.step()
+                    self.critic_opt.step()
+                    self.critic.clip()
 
-                    for p in critic.parameters():
-                        p.data.clamp_(-CLIP, CLIP)
-
-                critic.zero_grad()
-                gen.zero_grad()
-                noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(device)
-                gen_loss = -torch.mean(critic(gen(noise)))
+                self.critic.zero_grad()
+                self.gen.zero_grad()
+                noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(self.device)
+                gen_loss = -torch.mean(self.critic(self.gen(noise)))
                 gen_loss.backward()
-                gen_opt.step()
-
-                if i % 10 == 0:
-                    print(f'{e:04}:{i:04}: Losses: dsc = {critic_loss:.4f}, gen = {gen_loss:.4f}')
-
-                i += 1
+                self.gen_opt.step()
             except StopIteration:
                 break
 
-        print('saving sample...')
-        sample = gen(vis_params)
-        torchvision.utils.save_image(sample, f'out/out-{e:04}.png', normalize=True)
-        print('done')
+    def sample_images(self):
+        return self.gen(self.vis_params)
+
+    def get_snapshot(self):
+        return {
+            'gen': self.gen,
+            'critic': self.critic
+        }
+
+if __name__ == '__main__':
+    runner = WGANTrainingRunner()
+    runner.run(batch_size=BATCH_SIZE)

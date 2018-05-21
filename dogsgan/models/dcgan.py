@@ -96,7 +96,7 @@ class DCGANRunner(TrainingRunner):
 
         self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
 
-    def run_epoch(self, it):
+    def run_epoch(self, it, context):
         for X_real, _ in it:
             self.dsc.zero_grad()
 

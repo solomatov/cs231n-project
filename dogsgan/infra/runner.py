@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import torchvision
 from tqdm import tqdm
+from tensorboardX import SummaryWriter
 
 import torch
 
@@ -11,6 +12,19 @@ from dogsgan.data.loader import create_loader
 
 
 out_root = Path('out')
+
+
+class TrainingContext:
+    def __init__(self, writer):
+        self.writer = writer
+        self.iter = 0
+        self.epoch = 0
+
+    def inc_iter(self):
+        self.iter += 1
+
+    def add_scalar(self, name, value):
+        self.writer.add_scalar(name, value, self.iter)
 
 
 class TrainingRunner:
@@ -29,13 +43,17 @@ class TrainingRunner:
         self.out_dir.mkdir(parents=True, exist_ok=True)
         loader = create_loader(batch_size=batch_size)
 
-        for e in range(epochs):
-            with tqdm(loader, desc=f'Epoch {e}') as iterable:
-                it = iter(iterable)
-                self.run_epoch(it)
+        with SummaryWriter(log_dir=str(self.out_dir)) as writer:
+            context = TrainingContext(writer)
 
-            self.save_image_sample(e)
-            self.save_snapshot(e)
+            for e in range(epochs):
+                context.epoch = e
+                with tqdm(loader, desc=f'Epoch {e}') as iterable:
+                    it = iter(iterable)
+                    self.run_epoch(it, context)
+
+                self.save_image_sample(e)
+                self.save_snapshot(e)
 
     def save_image_sample(self, e):
         sample = self.sample_images()
@@ -58,7 +76,7 @@ class TrainingRunner:
         if snapshot_backup.exists():
             snapshot_backup.unlink()
 
-    def run_epoch(self, it):
+    def run_epoch(self, it, context):
         raise NotImplementedError
 
     def sample_images(self):

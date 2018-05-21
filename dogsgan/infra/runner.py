@@ -40,7 +40,7 @@ class TrainingRunner:
     def save_image_sample(self, e):
         sample = self.sample_images()
         image_path = self.out_dir / f'sample-{e:05}.png'
-        torchvision.utils.save_image(sample, str(image_path).encode('ascii'), normalize=True)
+        torchvision.utils.save_image(sample, str(image_path), normalize=True)
 
     def save_snapshot(self, e):
         snapshot = self.out_dir / 'current.snapshot'

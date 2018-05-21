@@ -41,13 +41,13 @@ class TrainingRunner:
 
     def run(self, epochs=10000, batch_size=128):
         self.out_dir.mkdir(parents=True, exist_ok=True)
-        loader = create_loader(batch_size=batch_size)
 
         with SummaryWriter(log_dir=str(self.out_dir)) as writer:
             context = TrainingContext(writer)
 
             for e in range(epochs):
                 context.epoch = e
+                loader = create_loader(batch_size=batch_size)
                 with tqdm(loader, desc=f'Epoch {e}') as iterable:
                     it = iter(iterable)
                     self.run_epoch(it, context)

@@ -31,14 +31,16 @@ class Generator(nn.Module):
         self.conv1 = nn.ConvTranspose2d(base * 8, base * 4, (5, 5), stride=2, padding=2, output_padding=1)
         self.bn1 = nn.BatchNorm2d(base * 4)
         self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (5, 5), stride=2, padding=2, output_padding=1)
+        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.ConvTranspose2d(base * 2, base, (5, 5), stride=2, padding=2, output_padding=1)
+        self.bn3 = nn.BatchNorm2d(base)
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
     def forward(self, z):
         z0 = lrelu(self.noise_project(z).view(-1, self.base * 8, 4, 4))
         z1 = lrelu(self.bn1(self.conv1(z0)))
-        z2 = lrelu(self.conv2(z1))
-        z3 = lrelu(self.conv3(z2))
+        z2 = lrelu(self.bn2(self.conv2(z1)))
+        z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = lrelu(self.conv4(z3))
         return F.tanh(z4)
 
@@ -53,17 +55,20 @@ class Critic(nn.Module):
         self.conv1 = nn.Conv2d(3, base, (5, 5), padding=2, stride=2)
         self.bn1 = nn.BatchNorm2d(base)
         self.conv2 = nn.Conv2d(base, base * 2, (5, 5), padding=2, stride=2)
+        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
+        self.bn3 = nn.BatchNorm2d(base * 4)
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
+        self.bn4 = nn.BatchNorm2d(base * 8)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
         self.clip()
 
     def forward(self, x):
         z1 = lrelu(self.bn1(self.conv1(x)))
-        z2 = lrelu(self.conv2(z1))
-        z3 = lrelu(self.conv3(z2))
-        z4 = lrelu(self.conv4(z3))
+        z2 = lrelu(self.bn2(self.conv2(z1)))
+        z3 = lrelu(self.bn3(self.conv3(z2)))
+        z4 = lrelu(self.bn4(self.conv4(z3)))
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
 
     def clip(self):
@@ -82,11 +87,9 @@ class WGANTrainingRunner(TrainingRunner):
 
         self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
 
-    def run_epoch(self, it, context):
+    def run_epoch(self, it):
         while True:
             try:
-                context.inc_iter()
-
                 for _ in range(N_CRITIC):
                     X_real, _ = next(it)
                     self.critic.zero_grad()
@@ -106,9 +109,6 @@ class WGANTrainingRunner(TrainingRunner):
                 gen_loss = -torch.mean(self.critic(self.gen(noise)))
                 gen_loss.backward()
                 self.gen_opt.step()
-
-                context.add_scalar('critic_loss', critic_loss)
-                context.add_scalar('generator_loss', gen_loss)
             except StopIteration:
                 break
 

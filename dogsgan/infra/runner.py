@@ -32,7 +32,7 @@ class TrainingContext:
 
     def add_image_batch(self, name, batch):
         image = torchvision.utils.make_grid(batch, normalize=True, scale_each=True)
-        self.add_image(name, image)
+        self.writer.add_image(name, image, self.epoch)
 
 
 class TrainingRunner:

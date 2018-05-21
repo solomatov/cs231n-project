@@ -98,6 +98,8 @@ class DCGANRunner(TrainingRunner):
 
     def run_epoch(self, it, context):
         for X_real, _ in it:
+            context.inc_iter()
+
             self.dsc.zero_grad()
 
             N = X_real.shape[0]
@@ -122,6 +124,9 @@ class DCGANRunner(TrainingRunner):
             gen_loss = -torch.mean(torch.log(y_))
             gen_loss.backward()
             self.gen_opt.step()
+
+            context.add_scalar('gen_loss', gen_loss)
+            context.add_scalar('dsc_loss', dsc_loss)
 
     def sample_images(self):
         return self.gen(self.vis_params)

@@ -8,6 +8,7 @@ from tensorboardX import SummaryWriter
 
 import torch
 
+
 from dogsgan.data.loader import create_loader
 
 
@@ -25,6 +26,13 @@ class TrainingContext:
 
     def add_scalar(self, name, value):
         self.writer.add_scalar(name, value, self.iter)
+
+    def add_image(self, name, image):
+        self.writer.add_image(name, image, self.iter)
+
+    def add_image_batch(self, name, batch):
+        image = torchvision.utils.make_grid(batch, normalize=True, scale_each=True)
+        self.add_image(name, image)
 
 
 class TrainingRunner:
@@ -52,15 +60,14 @@ class TrainingRunner:
                     it = iter(iterable)
                     self.run_epoch(it, context)
 
-                self.save_image_sample(e)
-                self.save_snapshot(e)
+                self.save_image_sample(context)
+                self.save_snapshot(context)
 
-    def save_image_sample(self, e):
+    def save_image_sample(self, context):
         sample = self.sample_images()
-        image_path = self.out_dir / f'sample-{e:05}.png'
-        torchvision.utils.save_image(sample, str(image_path), normalize=True)
+        context.add_image_batch('Generated Images', sample)
 
-    def save_snapshot(self, e):
+    def save_snapshot(self, context):
         snapshot = self.out_dir / 'current.snapshot'
         snapshot_backup = self.out_dir / 'current.snapshot.backup'
 
@@ -69,7 +76,7 @@ class TrainingRunner:
 
         data = self.get_snapshot()
         torch.save({
-            'epoch': e,
+            'epoch': context.epoch,
             'data': data
         }, snapshot)
 

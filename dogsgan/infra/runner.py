@@ -1,12 +1,12 @@
-from pathlib import Path
-import shutil
 import datetime
-import hashlib
+import shutil
+from pathlib import Path
+
+import torch
 import torchvision
-from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
-import torch
+from tqdm import tqdm
 
 out_root = Path('out')
 

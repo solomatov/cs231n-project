@@ -76,7 +76,7 @@ class Critic(nn.Module):
         for m in self.modules():
             if not isinstance(m, nn.BatchNorm2d):
                 for p in m.parameters():
-                    p.data.clamp(-CLIP, CLIP)
+                    p.data.clamp_(-CLIP, CLIP)
 
 
 class WGANTrainingRunner(TrainingRunner):

@@ -2,7 +2,7 @@ data/*
 cache/*
 .idea/*
 .vscode/*
-sync.sh
+sync*.sh
 __pycache__
 **/*.pyc
 connect*.sh

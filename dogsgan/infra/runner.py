@@ -5,12 +5,8 @@ import hashlib
 import torchvision
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
-
+from torch.utils.data import DataLoader
 import torch
-
-
-from dogsgan.data.loader import create_loader
-
 
 out_root = Path('out')
 
@@ -36,7 +32,10 @@ class TrainingContext:
 
 
 class TrainingRunner:
-    def __init__(self, name):
+    def __init__(self, name, dataset):
+        self.name = name
+        self.dataset = dataset
+
         now = datetime.datetime.now()
         self.out_dir = out_root / f'{name}-{now:%Y%m%d-%H%M-%S}'
         has_cuda = torch.cuda.device_count() > 0
@@ -55,7 +54,7 @@ class TrainingRunner:
 
             for e in range(epochs):
                 context.epoch = e
-                loader = create_loader(batch_size=batch_size)
+                loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8)
                 with tqdm(loader, desc=f'Epoch {e}') as iterable:
                     it = iter(iterable)
                     self.run_epoch(it, context)

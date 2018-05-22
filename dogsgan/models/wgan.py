@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from dogsgan.infra.runner import TrainingRunner
-
+from dogsgan.data.dogs import create_dogs_dataset
 
 ALPHA = 0.2
 BATCH_SIZE = 64
@@ -77,9 +77,10 @@ class Critic(nn.Module):
                 for p in m.parameters():
                     p.data.clamp(-CLIP, CLIP)
 
+
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan')
+        super().__init__('wgan', create_dogs_dataset())
         self.gen = Generator().to(self.device)
         self.critic = Critic().to(self.device)
 

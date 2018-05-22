@@ -3,6 +3,7 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
+from dogsgan.data.dogs import create_dogs_dataset
 from dogsgan.infra.runner import TrainingRunner
 
 
@@ -86,7 +87,7 @@ class Discriminator(nn.Module):
 
 class DCGANRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('dcgan')
+        super().__init__('dcgan', create_dogs_dataset())
         self.gen = Generator().to(self.device)
         self.dsc = Discriminator().to(self.device)
 

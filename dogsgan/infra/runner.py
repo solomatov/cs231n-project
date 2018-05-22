@@ -31,7 +31,7 @@ class TrainingContext:
         self.writer.add_image(name, image, self.epoch)
 
     def add_histogram(self, name, histogram):
-        self.writer.add_histogram(name, histogram, self.iter)
+        self.writer.add_histogram(name, histogram, self.epoch)
 
 
 class TrainingRunner:

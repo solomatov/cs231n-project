@@ -30,6 +30,9 @@ class TrainingContext:
         image = torchvision.utils.make_grid(batch, normalize=True, scale_each=True)
         self.writer.add_image(name, image, self.epoch)
 
+    def add_histogram(self, name, histogram):
+        self.writer.add_histogram(name, histogram, self.iter)
+
 
 class TrainingRunner:
     def __init__(self, name, dataset):

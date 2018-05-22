@@ -5,3 +5,4 @@ cache/*
 sync.sh
 __pycache__
 **/*.pyc
+connect*.sh

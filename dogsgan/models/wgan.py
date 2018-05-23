@@ -64,6 +64,7 @@ class Critic(nn.Module):
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
         self.bn3 = nn.BatchNorm2d(base * 4, affine=True)
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
+        self.bn4 = nn.BatchNorm2d(base * 8, affine=True)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
         self.clip()
@@ -72,7 +73,7 @@ class Critic(nn.Module):
         z1 = lrelu(self.bn1(self.conv1(x)))
         z2 = lrelu(self.bn2(self.conv2(z1)))
         z3 = lrelu(self.bn3(self.conv3(z2)))
-        z4 = lrelu(self.conv4(z3))
+        z4 = lrelu(self.bn4(self.conv4(z3)))
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
 
     def clip(self):
@@ -127,8 +128,8 @@ class WGANTrainingRunner(TrainingRunner):
                 context.add_scalar('critic_loss', critic_loss)
                 context.add_scalar('gen_loss', gen_loss)
 
-                context.add_scalar('critic_grad', critic_grad)
-                context.add_scalar('gen_grad', gen_grad)
+                context.add_scalar('grad/critic', critic_grad)
+                context.add_scalar('grad/gen', gen_grad)
 
                 context.inc_iter()
             except StopIteration:

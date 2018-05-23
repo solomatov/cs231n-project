@@ -58,13 +58,13 @@ class Critic(nn.Module):
         base = self.base
 
         self.conv1 = nn.Conv2d(3, base, (5, 5), padding=2, stride=2)
-        self.bn1 = nn.BatchNorm2d(base)
+        self.bn1 = nn.BatchNorm2d(base, affine=True)
         self.conv2 = nn.Conv2d(base, base * 2, (5, 5), padding=2, stride=2)
-        self.bn2 = nn.BatchNorm2d(base * 2)
+        self.bn2 = nn.BatchNorm2d(base * 2, affine=True)
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
-        self.bn3 = nn.BatchNorm2d(base * 4)
+        self.bn3 = nn.BatchNorm2d(base * 4, affine=True)
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
-        self.bn4 = nn.BatchNorm2d(base * 8)
+        self.bn4 = nn.BatchNorm2d(base * 8, affine=True)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
         self.clip()

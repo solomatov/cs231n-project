@@ -20,6 +20,10 @@ def lrelu(x):
     return F.leaky_relu(x, ALPHA)
 
 
+def grad_norm(m):
+    return max(p.abs().max() for p in m.parameters())
+
+
 class Generator(nn.Module):
     def __init__(self):
         super().__init__()
@@ -103,19 +107,29 @@ class WGANTrainingRunner(TrainingRunner):
                     critic_f = self.critic(X_fake)
                     critic_r = self.critic(X_real)
                     critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
+
                     critic_loss.backward()
+
+                    critic_grad = grad_norm(self.critic)
+
                     self.critic_opt.step()
                     self.critic.clip()
 
                 self.critic.zero_grad()
                 self.gen.zero_grad()
-                # noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(self.device)
+                noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(self.device)
                 gen_loss = -torch.mean(self.critic(self.gen(noise)))
                 gen_loss.backward()
+
+                gen_grad = grad_norm(self.gen)
+
                 self.gen_opt.step()
 
                 context.add_scalar('critic_loss', critic_loss)
                 context.add_scalar('gen_loss', gen_loss)
+
+                context.add_scalar('critic_grad', critic_grad)
+                context.add_scalar('gen_grad', gen_grad)
 
                 context.inc_iter()
             except StopIteration:

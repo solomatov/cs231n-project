@@ -24,14 +24,18 @@ def lrelu(x):
     return F.leaky_relu(x, ALPHA)
 
 
-def grad_norm(m):
-    return max(p.abs().max() for p in m.parameters())
+def init_weight(layer):
+    layer.weight.data.normal_(0.0, WEIGHT_STD)
 
 
-def init_modules(root):
-    for m in root.modules():
-        if isinstance(m, nn.Linear) or isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d):
-            m.weight.data.normal_(0.0, WEIGHT_STD)
+def init_weights(module):
+    for c in module.children():
+        init_weight(c)
+
+
+def gen_labels(shape, mean):
+    result = torch.randn(shape) * WEIGHT_STD + mean
+    return result.clamp(min=1e-7, max=1.0)
 
 
 class Generator(nn.Module):
@@ -42,22 +46,18 @@ class Generator(nn.Module):
         base = self.base
 
         self.noise_project = nn.Linear(NOISE_DIM, 4 * 4 * base * 8)
-        self.bn0 = nn.BatchNorm1d(4 * 4 * base * 8)
         self.conv1 = nn.ConvTranspose2d(base * 8, base * 4, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn1 = nn.BatchNorm2d(base * 4)
         self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.ConvTranspose2d(base * 2, base, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn3 = nn.BatchNorm2d(base)
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
-        init_modules(self)
+        init_weights(self)
 
     def forward(self, z):
-        z0 = lrelu(self.bn0(self.noise_project(z)).view(-1, self.base * 8, 4, 4))
-        z1 = lrelu(self.bn1(self.conv1(z0)))
-        z2 = lrelu(self.bn2(self.conv2(z1)))
-        z3 = lrelu(self.bn3(self.conv3(z2)))
+        z0 = lrelu(self.noise_project(z).view(-1, self.base * 8, 4, 4))
+        z1 = lrelu(self.conv1(z0))
+        z2 = lrelu(self.conv2(z1))
+        z3 = lrelu(self.conv3(z2))
         z4 = self.conv4(z3)
         return F.tanh(z4)
 
@@ -70,22 +70,18 @@ class Discriminator(nn.Module):
         base = self.base
 
         self.conv1 = nn.Conv2d(3, base, (5, 5), padding=2, stride=2)
-        self.bn1 = nn.BatchNorm2d(base)
         self.conv2 = nn.Conv2d(base, base * 2, (5, 5), padding=2, stride=2)
-        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
-        self.bn3 = nn.BatchNorm2d(base * 4)
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
-        self.bn4 = nn.BatchNorm2d(base * 8)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
-        init_modules(self)
+        init_weights(self)
 
     def forward(self, x):
-        z1 = lrelu(self.bn1(self.conv1(x)))
-        z2 = lrelu(self.bn2(self.conv2(z1)))
-        z3 = lrelu(self.bn3(self.conv3(z2)))
-        z4 = lrelu(self.bn4(self.conv4(z3)))
+        z1 = lrelu(self.conv1(x))
+        z2 = lrelu(self.conv2(z1))
+        z3 = lrelu(self.conv3(z2))
+        z4 = lrelu(self.conv4(z3))
         return F.sigmoid(self.collapse(z4.view(-1, (self.base * 8) * 4 * 4)))
 
 

@@ -41,8 +41,8 @@ class TrainingRunner:
 
         now = datetime.datetime.now()
         self.out_dir = out_root / f'{name}-{now:%Y%m%d-%H%M-%S}'
-        has_cuda = torch.cuda.device_count() > 0
-        if has_cuda:
+        self.has_cuda = torch.cuda.device_count() > 0
+        if self.has_cuda:
             self.device = torch.device('cuda:0')
         else:
             self.device = torch.device('cpu:0')
@@ -57,7 +57,7 @@ class TrainingRunner:
 
             for e in range(epochs):
                 context.epoch = e
-                loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+                loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
                 with tqdm(loader, desc=f'Epoch {e}') as iterable:
                     it = iter(iterable)
                     self.run_epoch(it, context)

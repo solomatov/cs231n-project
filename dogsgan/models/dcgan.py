@@ -86,15 +86,15 @@ class Discriminator(nn.Module):
 
 class DCGANRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('dcgan', create_dogs_dataset())
-        self.gen = Generator().to(self.device)
-        self.dsc = Discriminator().to(self.device)
+        super().__init__('dcgan', create_dogs_dataset(), use_half=True)
+        self.gen = self.convert(Generator())
+        self.dsc = self.convert(Discriminator())
 
         scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
-        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
-        self.gen_opt = optim.Adam(self.gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
+        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999), eps=1e-4)
+        self.gen_opt = optim.Adam(self.gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999), eps=1e-4)
 
-        self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
+        self.vis_params = self.convert(torch.randn((104, NOISE_DIM)))
 
     def run_epoch(self, it, context):
         for X_real, _ in it:
@@ -103,10 +103,10 @@ class DCGANRunner(TrainingRunner):
             self.dsc.zero_grad()
 
             N = X_real.shape[0]
-            X_real = X_real.to(self.device)
-            X_fake = self.gen(torch.randn((N, NOISE_DIM)).to(self.device))
-            y_fake = torch.zeros((N, 1)).to(self.device)
-            y_real = torch.ones((N, 1)).to(self.device)
+            X_real = self.convert(X_real)
+            X_fake = self.gen(self.convert(torch.randn((N, NOISE_DIM))))
+            y_fake = self.convert(torch.zeros((N, 1)))
+            y_real = self.convert(torch.ones((N, 1)))
 
             y = torch.cat([y_real, y_fake])
             y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
@@ -117,7 +117,7 @@ class DCGANRunner(TrainingRunner):
 
             self.dsc.zero_grad()
             self.gen.zero_grad()
-            X_fake = self.gen(torch.randn((N, NOISE_DIM)).to(self.device))
+            X_fake = self.gen(self.convert(torch.randn((N, NOISE_DIM))))
             y_ = self.dsc(X_fake)
 
             gen_loss = -torch.mean(torch.log(y_))

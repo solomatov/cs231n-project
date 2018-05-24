@@ -101,7 +101,7 @@ class WGANTrainingRunner(TrainingRunner):
         self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE, eps=1e-4)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE, eps=1e-4)
 
-        self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
+        self.vis_params = self.convert(torch.randn((104, NOISE_DIM)))
 
     def run_epoch(self, it, context):
         while True:
@@ -146,7 +146,7 @@ class WGANTrainingRunner(TrainingRunner):
                 break
 
     def sample_images(self):
-        return self.gen(self.convert(self.vis_params))
+        return self.gen(self.vis_params)
 
     def get_snapshot(self):
         return {

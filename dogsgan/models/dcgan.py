@@ -86,7 +86,7 @@ class Discriminator(nn.Module):
 
 class DCGANRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('dcgan', create_dogs_dataset(), use_half=False)
+        super().__init__('dcgan', create_dogs_dataset())
         self.gen = self.convert(Generator())
         self.dsc = self.convert(Discriminator())
 

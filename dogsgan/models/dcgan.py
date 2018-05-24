@@ -91,8 +91,8 @@ class DCGANRunner(TrainingRunner):
         self.dsc = self.convert(Discriminator())
 
         scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
-        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999), eps=1e-4)
-        self.gen_opt = optim.Adam(self.gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999), eps=1e-4)
+        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999), eps=1e-6)
+        self.gen_opt = optim.Adam(self.gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999), eps=1e-6)
 
         self.vis_params = self.convert(torch.randn((104, NOISE_DIM)))
 

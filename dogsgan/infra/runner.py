@@ -35,9 +35,10 @@ class TrainingContext:
 
 
 class TrainingRunner:
-    def __init__(self, name, dataset):
+    def __init__(self, name, dataset, use_half=False):
         self.name = name
         self.dataset = dataset
+        self.use_half = use_half
 
         now = datetime.datetime.now()
         self.out_dir = out_root / f'{name}-{now:%Y%m%d-%H%M-%S}'
@@ -84,6 +85,12 @@ class TrainingRunner:
 
         if snapshot_backup.exists():
             snapshot_backup.unlink()
+
+    def convert(self, data):
+        result = data.to(self.device)
+        if self.use_half:
+            result = result.half()
+        return result
 
     def run_epoch(self, it, context):
         raise NotImplementedError

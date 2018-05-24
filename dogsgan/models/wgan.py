@@ -94,12 +94,12 @@ class Critic(nn.Module):
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan', create_dogs_dataset())
-        self.gen = Generator().to(self.device)
-        self.critic = Critic().to(self.device)
+        super().__init__('wgan', create_dogs_dataset(), use_half=True)
+        self.gen = self.convert(Generator())
+        self.critic = self.convert(Critic())
 
-        self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE)
-        self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
+        self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE, eps=1e-4)
+        self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE, eps=1e-4)
 
         self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
 
@@ -108,10 +108,11 @@ class WGANTrainingRunner(TrainingRunner):
             try:
                 for _ in range(N_CRITIC):
                     X_real, _ = next(it)
+                    X_real = self.convert(X_real)
                     self.critic.zero_grad()
                     self.gen.zero_grad()
-                    X_real = X_real.to(self.device)
-                    noise = torch.randn((X_real.shape[0], NOISE_DIM)).to(self.device)
+                    X_real = self.convert(X_real)
+                    noise = self.convert(torch.randn((X_real.shape[0], NOISE_DIM)))
                     X_fake = self.gen(noise)
                     critic_f = self.critic(X_fake)
                     critic_r = self.critic(X_real)
@@ -126,7 +127,7 @@ class WGANTrainingRunner(TrainingRunner):
 
                 self.critic.zero_grad()
                 self.gen.zero_grad()
-                noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(self.device)
+                noise = self.convert(torch.randn((BATCH_SIZE, NOISE_DIM)))
                 gen_loss = -torch.mean(self.critic(self.gen(noise)))
                 gen_loss.backward()
 
@@ -145,14 +146,13 @@ class WGANTrainingRunner(TrainingRunner):
                 break
 
     def sample_images(self):
-        return self.gen(self.vis_params)
+        return self.gen(self.convert(self.vis_params))
 
     def get_snapshot(self):
         return {
             'gen': self.gen,
             'critic': self.critic
         }
-
 
 if __name__ == '__main__':
     runner = WGANTrainingRunner()

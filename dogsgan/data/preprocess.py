@@ -3,6 +3,8 @@ from PIL import Image
 
 from dogsgan.data.common import image_dir, annotation_dir, preprocessed_dir, image_size
 
+RESIZE_THRESHOLD = 1.5
+
 
 def annotated_images():
     for image in image_dir.glob('**/*.jpg'):
@@ -30,22 +32,32 @@ if __name__ == '__main__':
     preprocessed_dir.mkdir(exist_ok=True)
 
     n = 0
+    skipped = 0
     for i, c, bounds in annotated_images():
         if n % 1000 == 0:
             print(n)
 
+        n += 1
+
         xmin, ymin, xmax, ymax = bounds
+
+        w = (xmax - xmin)
+        h = (ymax - ymin)
+
+        if w / h > RESIZE_THRESHOLD or h / w > RESIZE_THRESHOLD:
+            skipped += 1
+
+            if skipped % 1000 == 0:
+                print(f'skipped {skipped}')
+            continue
+
         im = Image.open(i)
-
-        min_dim = min(xmax - xmin, ymax - ymin)
-        crop = im.crop((xmin, ymin, xmin + min_dim, ymin + min_dim))
-
-        result = crop.resize(image_size, Image.ANTIALIAS)
+        result = im.resize(image_size, Image.ANTIALIAS)
         result = result.convert("RGB")
 
         (preprocessed_dir / c).mkdir(exist_ok=True)
         target = preprocessed_dir / c / f'{n:06}.jpeg'
         result.save(str(target), quality=95)
 
-        n += 1
 
+    print(f'total skipped {skipped}')

@@ -62,7 +62,7 @@ class Generator(nn.Module):
         return F.tanh(z4)
 
 
-class Critic(nn.Module):
+class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -86,7 +86,7 @@ class Critic(nn.Module):
         z2 = lrelu(self.bn2(self.conv2(z1)))
         z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = lrelu(self.bn4(self.conv4(z3)))
-        return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
+        return F.sigmoid(self.collapse(z4.view(-1, (self.base * 8) * 4 * 4)))
 
 
 class DCGANRunner(TrainingRunner):
@@ -110,8 +110,8 @@ class DCGANRunner(TrainingRunner):
             N = X_real.shape[0]
             X_real = X_real.to(self.device)
             X_fake = self.gen(torch.randn((N, NOISE_DIM)).to(self.device))
-            y_fake = gen_labels((N, 1), ZERO_LABEL_MEAN).to(self.device)
-            y_real = gen_labels((N, 1), ONE_LABEL_MEAN).to(self.device)
+            y_fake = torch.zeros((N, 1)).to(self.device)
+            y_real = torch.ones((N, 1)).to(self.device)
 
             X = torch.cat([X_real, X_fake])
             y = torch.cat([y_real, y_fake])

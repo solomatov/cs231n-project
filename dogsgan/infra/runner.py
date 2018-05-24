@@ -46,7 +46,7 @@ class TrainingRunner:
             self.device = torch.device('cuda:0')
         else:
             self.device = torch.device('cpu:0')
-        print(f'Default devlice is {self.device}')
+        print(f'Default device is {self.device}')
         print(f'Output dir is {str(self.out_dir)}', flush=True)
 
     def run(self, epochs=10000, batch_size=128):

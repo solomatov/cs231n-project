@@ -54,7 +54,7 @@ class Generator(nn.Module):
         z1 = lrelu(self.bn1(self.conv1(z0)))
         z2 = lrelu(self.bn2(self.conv2(z1)))
         z3 = lrelu(self.bn3(self.conv3(z2)))
-        z4 = lrelu(self.conv4(z3))
+        z4 = self.conv4(z3)
         return F.tanh(z4)
 
 

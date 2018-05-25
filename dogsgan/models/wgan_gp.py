@@ -146,6 +146,7 @@ class WGANTrainingRunner(TrainingRunner):
 
                 context.add_scalar('grad/critic', critic_grad)
                 context.add_scalar('grad/gen', gen_grad)
+                context.add_scalar('grad/gp', gp)
 
                 context.inc_iter()
             except StopIteration:

@@ -14,7 +14,7 @@ LEARNING_RATE = 0.00005
 NOISE_DIM = 100
 BASE_DIM = 128
 WEIGHT_STD = 0.02
-LAMBDA = 1
+LAMBDA = 10.0
 
 
 def lrelu(x):
@@ -67,22 +67,23 @@ class Critic(nn.Module):
         base = self.base
 
         self.conv1 = nn.Conv2d(3, base, (5, 5), padding=2, stride=2)
-        self.bn1 = nn.BatchNorm2d(base)
+        self.ln1 = nn.LayerNorm([base, 32, 32])
         self.conv2 = nn.Conv2d(base, base * 2, (5, 5), padding=2, stride=2)
-        self.bn2 = nn.BatchNorm2d(base * 2)
+        self.ln2 = nn.LayerNorm([base * 2, 16, 16])
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
-        self.bn3 = nn.BatchNorm2d(base * 4)
+        self.ln3 = nn.LayerNorm([base * 4, 8, 8])
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
-        self.bn4 = nn.BatchNorm2d(base * 8)
+        self.ln4 = nn.LayerNorm([base * 8, 4, 4])
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
+
 
         init_modules(self)
 
     def forward(self, x):
-        z1 = lrelu(self.bn1(self.conv1(x)))
-        z2 = lrelu(self.bn2(self.conv2(z1)))
-        z3 = lrelu(self.bn3(self.conv3(z2)))
-        z4 = lrelu(self.bn4(self.conv4(z3)))
+        z1 = lrelu(self.ln1(self.conv1(x)))
+        z2 = lrelu(self.ln2(self.conv2(z1)))
+        z3 = lrelu(self.ln3(self.conv3(z2)))
+        z4 = lrelu(self.ln4(self.conv4(z3)))
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
 
 

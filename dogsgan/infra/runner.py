@@ -64,15 +64,18 @@ class TrainingRunner:
                     self.run_epoch(it, context)
 
                 self.save_image_sample(context)
-                self.save_snapshot(context)
+                self.save_snapshot(context, self.out_dir / 'current.snapshot')
+
+                if e > 0 and e % 20 == 0:
+                    self.save_snapshot(context, self.out_dir / f'epoch-{e:05}.snapshot')
 
     def save_image_sample(self, context):
         sample = self.sample_images()
         context.add_image_batch('Generated Images', sample)
 
-    def save_snapshot(self, context):
-        snapshot = self.out_dir / 'current.snapshot'
-        snapshot_backup = self.out_dir / 'current.snapshot.backup'
+    def save_snapshot(self, context, target):
+        snapshot = target
+        snapshot_backup = target.parent / f'{target.name}.backup'
 
         if snapshot.exists():
             shutil.move(str(snapshot), snapshot_backup)

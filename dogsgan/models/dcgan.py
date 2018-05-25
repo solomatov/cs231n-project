@@ -9,7 +9,7 @@ from dogsgan.infra.runner import TrainingRunner
 
 ALPHA = 0.2
 BATCH_SIZE = 128
-NOISE_DIM = 100
+NOISE_DIM = 1024
 BASE_DIM = 128
 WEIGHT_STD = 0.02
 BASE_LR_128 = 0.0002

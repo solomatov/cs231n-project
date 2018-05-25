@@ -39,13 +39,13 @@ class Generator(nn.Module):
         base = self.base
 
         self.noise_project = nn.Linear(NOISE_DIM, 4 * 4 * base * 8)
-        self.bn0 = nn.BatchNorm1d(4 * 4 * base * 8, affine=True)
+        self.bn0 = nn.BatchNorm1d(4 * 4 * base * 8)
         self.conv1 = nn.ConvTranspose2d(base * 8, base * 4, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn1 = nn.BatchNorm2d(base * 4, affine=True)
+        self.bn1 = nn.BatchNorm2d(base * 4)
         self.conv2 = nn.ConvTranspose2d(base * 4, base * 2, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn2 = nn.BatchNorm2d(base * 2, affine=True)
+        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.ConvTranspose2d(base * 2, base, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn3 = nn.BatchNorm2d(base, affine=True)
+        self.bn3 = nn.BatchNorm2d(base)
         self.conv4 = nn.ConvTranspose2d(base, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
         init_modules(self)
@@ -67,13 +67,13 @@ class Critic(nn.Module):
         base = self.base
 
         self.conv1 = nn.Conv2d(3, base, (5, 5), padding=2, stride=2)
-        self.bn1 = nn.BatchNorm2d(base, affine=True)
+        self.bn1 = nn.BatchNorm2d(base)
         self.conv2 = nn.Conv2d(base, base * 2, (5, 5), padding=2, stride=2)
-        self.bn2 = nn.BatchNorm2d(base * 2, affine=True)
+        self.bn2 = nn.BatchNorm2d(base * 2)
         self.conv3 = nn.Conv2d(base * 2, base * 4, (5, 5), padding=2, stride=2)
-        self.bn3 = nn.BatchNorm2d(base * 4, affine=True)
+        self.bn3 = nn.BatchNorm2d(base * 4)
         self.conv4 = nn.Conv2d(base * 4, base * 8, (5, 5), padding=2, stride=2)
-        self.bn4 = nn.BatchNorm2d(base * 8, affine=True)
+        self.bn4 = nn.BatchNorm2d(base * 8)
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
         init_modules(self)

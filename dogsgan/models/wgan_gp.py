@@ -85,9 +85,10 @@ class Critic(nn.Module):
         z4 = lrelu(self.bn4(self.conv4(z3)))
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
 
+
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan', create_dogs_dataset())
+        super().__init__('wgan-gp', create_dogs_dataset())
         self.gen = self.convert(Generator())
         self.critic = self.convert(Critic())
 

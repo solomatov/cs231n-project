@@ -14,6 +14,7 @@ LEARNING_RATE = 0.00005
 NOISE_DIM = 100
 BASE_DIM = 128
 WEIGHT_STD = 0.02
+LAMBDA = 1
 
 
 def lrelu(x):
@@ -94,7 +95,7 @@ class Critic(nn.Module):
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan', create_dogs_dataset(), use_half=True)
+        super().__init__('wgan', create_dogs_dataset())
         self.gen = self.convert(Generator())
         self.critic = self.convert(Critic())
 
@@ -108,15 +109,28 @@ class WGANTrainingRunner(TrainingRunner):
             try:
                 for _ in range(N_CRITIC):
                     X_real, _ = next(it)
+
                     X_real = self.convert(X_real)
+                    N = X_real.shape[0]
+
                     self.critic.zero_grad()
                     self.gen.zero_grad()
                     X_real = self.convert(X_real)
-                    noise = self.convert(torch.randn((X_real.shape[0], NOISE_DIM)))
+                    noise = self.convert(torch.randn((N, NOISE_DIM)))
                     X_fake = self.gen(noise)
                     critic_f = self.critic(X_fake)
                     critic_r = self.critic(X_real)
-                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
+
+
+                    a = self.convert(torch.zeros([N, 1, 1, 1]).uniform_())
+
+                    X_mix = X_real * a + X_fake * (1.0 - a)
+                    gp_grad = torch.autograd.grad(outputs=self.critic(X_mix), inputs=X_mix,
+                                                  grad_outputs=self.convert(torch.ones([N, 1])),
+                                                  retain_graph=True, create_graph=True)[0]
+
+                    gp = torch.mean((gp_grad.norm(dim=1).norm(dim=1).norm(dim=1) - 1)**2)
+                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r) + LAMBDA * gp
 
                     critic_loss.backward()
 

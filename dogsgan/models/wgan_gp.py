@@ -77,7 +77,6 @@ class Critic(nn.Module):
         self.collapse = nn.Linear((base * 8) * 4 * 4, 1)
 
         init_modules(self)
-        self.clip()
 
     def forward(self, x):
         z1 = lrelu(self.bn1(self.conv1(x)))
@@ -85,13 +84,6 @@ class Critic(nn.Module):
         z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = lrelu(self.bn4(self.conv4(z3)))
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
-
-    def clip(self):
-        for m in self.modules():
-            if not isinstance(m, nn.BatchNorm2d):
-                for p in m.parameters():
-                    p.data.clamp_(-CLIP, CLIP)
-
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
@@ -137,7 +129,6 @@ class WGANTrainingRunner(TrainingRunner):
                     critic_grad = grad_norm(self.critic)
 
                     self.critic_opt.step()
-                    self.critic.clip()
 
                 self.critic.zero_grad()
                 self.gen.zero_grad()

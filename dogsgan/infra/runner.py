@@ -60,7 +60,7 @@ class TrainingRunner:
                 context.epoch = e
                 loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
                 with tqdm(loader, desc=f'Epoch {e}') as iterable:
-                    it = iter(iterable)
+                    it = (x[0] for x in iterable)
                     self.run_epoch(it, context)
 
                 self.save_image_sample(context)

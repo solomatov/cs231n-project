@@ -96,7 +96,7 @@ class WGANTrainingRunner(TrainingRunner):
         while True:
             try:
                 for _ in range(N_CRITIC):
-                    X_real, _ = next(it)
+                    X_real = next(it)
                     self.critic.zero_grad()
                     self.gen.zero_grad()
                     X_real = X_real.to(self.device)

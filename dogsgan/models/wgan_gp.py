@@ -10,7 +10,7 @@ ALPHA = 0.2
 BATCH_SIZE = 64
 N_CRITIC = 5
 CLIP = 0.01
-LEARNING_RATE = 0.00005
+LEARNING_RATE = 1e-4
 NOISE_DIM = 100
 BASE_DIM = 128
 WEIGHT_STD = 0.02
@@ -93,8 +93,8 @@ class WGANTrainingRunner(TrainingRunner):
         self.gen = self.convert(Generator())
         self.critic = self.convert(Critic())
 
-        self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE, eps=1e-4)
-        self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE, eps=1e-4)
+        self.critic_opt = optim.Adam(self.critic.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
+        self.gen_opt = optim.Adam(self.gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
 
         self.vis_params = self.convert(torch.randn((104, NOISE_DIM)))
 

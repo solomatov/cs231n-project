@@ -35,9 +35,10 @@ class TrainingContext:
 
 
 class TrainingRunner:
-    def __init__(self, name, dataset, gen, dsc, use_half=False):
+    def __init__(self, name, dataset, gen, dsc, noise_generator, use_half=False):
         self.name = name
         self.dataset = dataset
+        self.noise_generator = noise_generator
         self.use_half = use_half
 
         now = datetime.datetime.now()
@@ -107,7 +108,7 @@ class TrainingRunner:
         raise NotImplementedError
 
     def gen_noise(self, n):
-        raise NotImplementedError
+        return self.convert(self.noise_generator(n))
 
     def get_snapshot(self):
         return {}

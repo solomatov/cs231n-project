@@ -94,7 +94,10 @@ class Discriminator(nn.Module):
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan', create_dogs_dataset(), Generator(), Discriminator(), use_half=True)
+        super().__init__('wgan', create_dogs_dataset(),
+                         Generator(), Discriminator(),
+                         lambda n: torch.randn((n, NOISE_DIM)),
+                         use_half=True)
 
         self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE, eps=1e-4)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE, eps=1e-4)
@@ -140,9 +143,6 @@ class WGANTrainingRunner(TrainingRunner):
                 context.inc_iter()
             except StopIteration:
                 break
-
-    def gen_noise(self, n):
-        return self.convert(torch.randn((n, NOISE_DIM)))
 
     def get_snapshot(self):
         return {

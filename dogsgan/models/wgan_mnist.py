@@ -83,7 +83,9 @@ mnist = datasets.MNIST(root='data/mnist', download=True, transform=transforms.To
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan-mnist', mnist, Generator(), Discriminator())
+        super().__init__('wgan-mnist', mnist,
+                         Generator(), Discriminator(),
+                         lambda n: torch.randn((n, NOISE_DIM)))
 
         self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
@@ -117,9 +119,6 @@ class WGANTrainingRunner(TrainingRunner):
                 context.inc_iter()
             except StopIteration:
                 break
-
-    def gen_noise(self, n):
-        return self.convert(torch.randn((n, NOISE_DIM)))
 
     def get_snapshot(self):
         return {

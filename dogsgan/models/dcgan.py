@@ -86,7 +86,9 @@ class Discriminator(nn.Module):
 
 class DCGANRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('dcgan', create_dogs_dataset(), Generator(), Discriminator())
+        super().__init__('dcgan', create_dogs_dataset(),
+                         Generator(), Discriminator(),
+                         lambda n: torch.randn((n, NOISE_DIM)))
 
         scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
         self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
@@ -122,9 +124,6 @@ class DCGANRunner(TrainingRunner):
 
             context.add_scalar('loss/gen', gen_loss)
             context.add_scalar('loss/dsc', dsc_loss)
-
-    def gen_noise(self, n):
-        return self.convert(torch.randn((n, NOISE_DIM)))
 
     def get_snapshot(self):
         return {

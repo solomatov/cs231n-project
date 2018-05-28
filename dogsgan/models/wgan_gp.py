@@ -89,7 +89,9 @@ class Discriminator(nn.Module):
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan-gp', create_dogs_dataset(), Generator(), Discriminator())
+        super().__init__('wgan-gp', create_dogs_dataset(),
+                         Generator(), Discriminator(),
+                         lambda n: torch.randn((n, NOISE_DIM)))
 
         self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
         self.gen_opt = optim.Adam(self.gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
@@ -148,9 +150,6 @@ class WGANTrainingRunner(TrainingRunner):
                 context.inc_iter()
             except StopIteration:
                 break
-
-    def gen_noise(self, n):
-        return self.convert(torch.randn((n, NOISE_DIM)))
 
     def get_snapshot(self):
         return {

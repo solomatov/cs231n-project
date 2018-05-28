@@ -35,7 +35,7 @@ class TrainingContext:
 
 
 class TrainingRunner:
-    def __init__(self, name, dataset, use_half=False):
+    def __init__(self, name, dataset, gen, dsc, use_half=False):
         self.name = name
         self.dataset = dataset
         self.use_half = use_half
@@ -49,6 +49,9 @@ class TrainingRunner:
             self.device = torch.device('cpu:0')
         print(f'Default device is {self.device}')
         print(f'Output dir is {str(self.out_dir)}', flush=True)
+
+        self.gen = self.convert(gen)
+        self.dsc = self.convert(dsc)
 
         self.vis_params = self.gen_noise(104)
 

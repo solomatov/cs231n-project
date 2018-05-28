@@ -44,7 +44,7 @@ class Generator(nn.Module):
         return F.tanh(self.convt2(z4))
 
 
-class Critic(nn.Module):
+class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -83,11 +83,9 @@ mnist = datasets.MNIST(root='data/mnist', download=True, transform=transforms.To
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan-mnist', mnist)
-        self.gen = Generator().to(self.device)
-        self.critic = Critic().to(self.device)
+        super().__init__('wgan-mnist', mnist, Generator(), Discriminator())
 
-        self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE)
+        self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
 
     def run_epoch(self, it, context):
@@ -95,21 +93,21 @@ class WGANTrainingRunner(TrainingRunner):
             try:
                 for _ in range(N_CRITIC):
                     X_real = next(it)
-                    self.critic.zero_grad()
+                    self.dsc.zero_grad()
                     self.gen.zero_grad()
                     X_real = X_real.to(self.device)
                     X_fake = self.gen(self.gen_noise(X_real.shape[0]))
-                    critic_f = self.critic(X_fake)
-                    critic_r = self.critic(X_real)
+                    critic_f = self.dsc(X_fake)
+                    critic_r = self.dsc(X_real)
                     critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
                     critic_loss.backward()
-                    self.critic_opt.step()
-                    self.critic.clip()
+                    self.dsc_opt.step()
+                    self.dsc.clip()
 
-                self.critic.zero_grad()
+                self.dsc.zero_grad()
                 self.gen.zero_grad()
                 noise = self.gen_noise(BATCH_SIZE)
-                gen_loss = -torch.mean(self.critic(self.gen(noise)))
+                gen_loss = -torch.mean(self.dsc(self.gen(noise)))
                 gen_loss.backward()
                 self.gen_opt.step()
 
@@ -126,7 +124,7 @@ class WGANTrainingRunner(TrainingRunner):
     def get_snapshot(self):
         return {
             'gen': self.gen,
-            'critic': self.critic
+            'critic': self.dsc
         }
 
 

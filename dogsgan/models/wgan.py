@@ -58,7 +58,7 @@ class Generator(nn.Module):
         return F.tanh(z4)
 
 
-class Critic(nn.Module):
+class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -94,11 +94,9 @@ class Critic(nn.Module):
 
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
-        super().__init__('wgan', create_dogs_dataset(), use_half=True)
-        self.gen = self.convert(Generator())
-        self.critic = self.convert(Critic())
+        super().__init__('wgan', create_dogs_dataset(), Generator(), Discriminator(), use_half=True)
 
-        self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE, eps=1e-4)
+        self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE, eps=1e-4)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE, eps=1e-4)
 
     def run_epoch(self, it, context):
@@ -107,26 +105,26 @@ class WGANTrainingRunner(TrainingRunner):
                 for _ in range(N_CRITIC):
                     X_real = next(it)
                     X_real = self.convert(X_real)
-                    self.critic.zero_grad()
+                    self.dsc.zero_grad()
                     self.gen.zero_grad()
                     X_real = self.convert(X_real)
                     noise = self.gen_noise(X_real.shape[0])
                     X_fake = self.gen(noise)
-                    critic_f = self.critic(X_fake)
-                    critic_r = self.critic(X_real)
+                    critic_f = self.dsc(X_fake)
+                    critic_r = self.dsc(X_real)
                     critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
 
                     critic_loss.backward()
 
-                    critic_grad = grad_norm(self.critic)
+                    critic_grad = grad_norm(self.dsc)
 
-                    self.critic_opt.step()
-                    self.critic.clip()
+                    self.dsc_opt.step()
+                    self.dsc.clip()
 
-                self.critic.zero_grad()
+                self.dsc.zero_grad()
                 self.gen.zero_grad()
                 noise = self.gen_noise(BATCH_SIZE)
-                gen_loss = -torch.mean(self.critic(self.gen(noise)))
+                gen_loss = -torch.mean(self.dsc(self.gen(noise)))
                 gen_loss.backward()
 
                 gen_grad = grad_norm(self.gen)
@@ -149,7 +147,7 @@ class WGANTrainingRunner(TrainingRunner):
     def get_snapshot(self):
         return {
             'gen': self.gen,
-            'critic': self.critic
+            'critic': self.dsc
         }
 
 if __name__ == '__main__':

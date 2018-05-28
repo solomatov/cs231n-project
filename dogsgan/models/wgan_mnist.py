@@ -90,8 +90,6 @@ class WGANTrainingRunner(TrainingRunner):
         self.critic_opt = optim.RMSprop(self.critic.parameters(), lr=LEARNING_RATE)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
 
-        self.vis_params = torch.randn((104, NOISE_DIM)).to(self.device)
-
     def run_epoch(self, it, context):
         while True:
             try:
@@ -100,7 +98,7 @@ class WGANTrainingRunner(TrainingRunner):
                     self.critic.zero_grad()
                     self.gen.zero_grad()
                     X_real = X_real.to(self.device)
-                    X_fake = self.gen(torch.randn((X_real.shape[0], NOISE_DIM)).to(self.device))
+                    X_fake = self.gen(self.gen_noise(X_real.shape[0]))
                     critic_f = self.critic(X_fake)
                     critic_r = self.critic(X_real)
                     critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
@@ -110,7 +108,7 @@ class WGANTrainingRunner(TrainingRunner):
 
                 self.critic.zero_grad()
                 self.gen.zero_grad()
-                noise = torch.randn((BATCH_SIZE, NOISE_DIM)).to(self.device)
+                noise = self.gen_noise(BATCH_SIZE)
                 gen_loss = -torch.mean(self.critic(self.gen(noise)))
                 gen_loss.backward()
                 self.gen_opt.step()
@@ -122,8 +120,8 @@ class WGANTrainingRunner(TrainingRunner):
             except StopIteration:
                 break
 
-    def sample_images(self):
-        return self.gen(self.vis_params)
+    def gen_noise(self, n):
+        return self.convert(torch.randn((n, NOISE_DIM)))
 
     def get_snapshot(self):
         return {

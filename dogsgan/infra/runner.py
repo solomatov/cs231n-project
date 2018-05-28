@@ -50,6 +50,8 @@ class TrainingRunner:
         print(f'Default device is {self.device}')
         print(f'Output dir is {str(self.out_dir)}', flush=True)
 
+        self.vis_params = self.gen_noise(104)
+
     def run(self, epochs=10000, batch_size=128):
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -95,10 +97,13 @@ class TrainingRunner:
             result = result.half()
         return result
 
+    def sample_images(self):
+        return self.gen(self.vis_params)
+
     def run_epoch(self, it, context):
         raise NotImplementedError
 
-    def sample_images(self):
+    def gen_noise(self, n):
         raise NotImplementedError
 
     def get_snapshot(self):

@@ -102,11 +102,11 @@ class DCGANRunner(TrainingRunner):
 
             self.dsc.zero_grad()
 
-            N = X_real.shape[0]
+            n = X_real.shape[0]
             X_real = self.convert(X_real)
-            X_fake = self.gen(self.convert(torch.randn((N, NOISE_DIM))))
-            y_fake = self.convert(torch.zeros((N, 1)))
-            y_real = self.convert(torch.ones((N, 1)))
+            X_fake = self.gen(self.gen_noise(n))
+            y_fake = self.convert(torch.zeros((n, 1)))
+            y_real = self.convert(torch.ones((n, 1)))
 
             y = torch.cat([y_real, y_fake])
             y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
@@ -117,7 +117,7 @@ class DCGANRunner(TrainingRunner):
 
             self.dsc.zero_grad()
             self.gen.zero_grad()
-            X_fake = self.gen(self.convert(torch.randn((N, NOISE_DIM))))
+            X_fake = self.gen(self.gen_noise(n))
             y_ = self.dsc(X_fake)
 
             gen_loss = -torch.mean(torch.log(y_))
@@ -127,8 +127,8 @@ class DCGANRunner(TrainingRunner):
             context.add_scalar('loss/gen', gen_loss)
             context.add_scalar('loss/dsc', dsc_loss)
 
-    def sample_images(self):
-        return self.gen(self.vis_params)
+    def gen_noise(self, n):
+        return self.convert(torch.randn((n, NOISE_DIM)))
 
     def get_snapshot(self):
         return {

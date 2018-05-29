@@ -8,8 +8,6 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-out_root = Path('out')
-
 
 class TrainingContext:
     def __init__(self, writer):
@@ -35,14 +33,20 @@ class TrainingContext:
 
 
 class TrainingRunner:
-    def __init__(self, name, dataset, gen, dsc, noise_generator, use_half=False):
+    def __init__(self, name, dataset, gen, dsc, noise_generator,
+                 use_half=False, permanent_snapshot_period=20, out_path=None):
         self.name = name
         self.dataset = dataset
         self.noise_generator = noise_generator
         self.use_half = use_half
+        self.permanent_snapshot_period = permanent_snapshot_period
 
         now = datetime.datetime.now()
-        self.out_dir = out_root / f'{name}-{now:%Y%m%d-%H%M-%S}'
+
+        if out_path is None:
+            out_path = Path('out')
+
+        self.out_dir = out_path / f'{name}-{now:%Y%m%d-%H%M-%S}'
         self.has_cuda = torch.cuda.device_count() > 0
         if self.has_cuda:
             self.device = torch.device('cuda:0')
@@ -72,7 +76,7 @@ class TrainingRunner:
                 self.save_image_sample(context)
                 self.save_snapshot(context, self.out_dir / 'current.snapshot')
 
-                if e > 0 and e % 20 == 0:
+                if e > 0 and e % self.permanent_snapshot_period == 0:
                     self.save_snapshot(context, self.out_dir / f'epoch-{e:05}.snapshot')
 
     def save_image_sample(self, context):

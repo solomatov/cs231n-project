@@ -1,0 +1,2 @@
+dcgan:
+  - starts to converg from ~96 base dim

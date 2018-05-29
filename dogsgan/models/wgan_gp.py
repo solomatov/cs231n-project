@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from dogsgan.training.runner import TrainingRunner, BaseGenerator
+from dogsgan.training.optimizers import WGANGPOptimizer
 from dogsgan.data.dogs import create_dogs_dataset
 
 ALPHA = 0.2
@@ -95,8 +96,6 @@ class WGANTrainingRunner(TrainingRunner):
         super().__init__('wgan-gp', create_dogs_dataset(),
                          Generator(), Discriminator(), None)
 
-        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
-        self.gen_opt = optim.Adam(self.gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
 
     def run_epoch(self, it, context):
         while True:
@@ -154,5 +153,5 @@ class WGANTrainingRunner(TrainingRunner):
 
 
 if __name__ == '__main__':
-    runner = WGANTrainingRunner()
+    runner = TrainingRunner('wgan_gp', create_dogs_dataset(), Generator(), Discriminator(), WGANGPOptimizer())
     runner.run(batch_size=BATCH_SIZE)

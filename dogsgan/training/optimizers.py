@@ -1,4 +1,4 @@
-from dogsgan.training.runner import GANOptimizer, TrainingContext
+from dogsgan.training.runner import GANOptimizer
 
 import torch
 import torch.optim as optim
@@ -78,7 +78,7 @@ class WGANOptimizer(GANOptimizer):
 
                     critic_loss.backward()
 
-                    critic_grad = self.grad_norm(self.dsc)
+                    critic_grad = grad_norm(self.dsc)
 
                     self.dsc_opt.step()
                     self.dsc.clip()
@@ -89,7 +89,7 @@ class WGANOptimizer(GANOptimizer):
                 gen_loss = -torch.mean(self.dsc(self.gen(noise)))
                 gen_loss.backward()
 
-                gen_grad = self.grad_norm(self.gen)
+                gen_grad = grad_norm(self.gen)
 
                 self.gen_opt.step()
 
@@ -103,8 +103,71 @@ class WGANOptimizer(GANOptimizer):
             except StopIteration:
                 break
 
-    def grad_norm(self, m):
-        return max(p.abs().max() for p in m.parameters())
+class WGANGPOptimizer(GANOptimizer):
+    def __init__(self, lr=1e-4, betas=(0.5, 0.9), l=10.0, n_dsc=5):
+        super().__init__()
+
+        self.lr = lr
+        self.betas = betas
+        self.l = l
+        self.n_dsc = n_dsc
+
+    def start_training(self, gen, dsc):
+        super().start_training(gen, dsc)
+        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=self.lr, betas=self.betas)
+        self.gen_opt = optim.Adam(self.gen.parameters(), lr=self.lr, betas=self.betas)
+
+    def run_epoch(self, it, ctx):
+        while True:
+            try:
+                for _ in range(self.n_dsc):
+                    X_real = next(it)
+
+                    n = X_real.shape[0]
+                    self.dsc.zero_grad()
+                    self.gen.zero_grad()
+                    noise = self.gen.gen_noise(n)
+                    X_fake = self.gen(noise)
+                    critic_f = self.dsc(X_fake)
+                    critic_r = self.dsc(X_real)
+
+                    a = torch.zeros([n, 1, 1, 1], device=ctx.device).uniform_()
+
+                    X_mix = X_real * a + X_fake * (1.0 - a)
+                    gp_grad = torch.autograd.grad(outputs=self.dsc(X_mix), inputs=X_mix,
+                                                  grad_outputs=torch.ones([n, 1], device=ctx.device),
+                                                  retain_graph=True, create_graph=True)[0]
+
+                    gp = torch.mean((gp_grad.norm(dim=1).norm(dim=1).norm(dim=1) - 1) ** 2)
+                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r) + self.l * gp
+
+                    critic_loss.backward()
+
+                    critic_grad = grad_norm(self.dsc)
+
+                    self.dsc_opt.step()
+
+                self.dsc.zero_grad()
+                self.gen.zero_grad()
+                noise = self.gen.gen_noise(n)
+                gen_loss = -torch.mean(self.dsc(self.gen(noise)))
+                gen_loss.backward()
+
+                gen_grad = grad_norm(self.gen)
+
+                self.gen_opt.step()
+
+                ctx.add_scalar('loss/critic', critic_loss)
+                ctx.add_scalar('loss/gen', gen_loss)
+
+                ctx.add_scalar('grad/critic', critic_grad)
+                ctx.add_scalar('grad/gen', gen_grad)
+                ctx.add_scalar('grad/gp', gp)
+
+                ctx.inc_iter()
+            except StopIteration:
+                break
 
 
-
+def grad_norm(m):
+    return max(p.abs().max() for p in m.parameters())

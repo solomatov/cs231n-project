@@ -97,6 +97,7 @@ class WGANTrainingRunner(TrainingRunner):
         super().__init__('wgan', create_dogs_dataset(),
                          Generator(), Discriminator(),
                          lambda n: torch.randn((n, NOISE_DIM)),
+                         None,
                          use_half=True)
 
         self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE, eps=1e-4)

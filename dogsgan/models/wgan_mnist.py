@@ -85,7 +85,7 @@ class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
         super().__init__('wgan-mnist', mnist,
                          Generator(), Discriminator(),
-                         lambda n: torch.randn((n, NOISE_DIM)))
+                         lambda n: torch.randn((n, NOISE_DIM)), None)
 
         self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)

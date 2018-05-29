@@ -10,13 +10,19 @@ from tqdm import tqdm
 
 
 class TrainingContext:
-    def __init__(self, writer):
+    def __init__(self, writer, device, noise_gen):
         self.writer = writer
+        self.device = device
+        self.noise_gen = noise_gen
+
         self.iter = 0
         self.epoch = 0
 
     def inc_iter(self):
         self.iter += 1
+
+    def gen_noise(self, n):
+        return self.noise_gen(n)
 
     def add_scalar(self, name, value):
         self.writer.add_scalar(name, value, self.iter)
@@ -32,12 +38,29 @@ class TrainingContext:
         self.writer.add_histogram(name, histogram, self.epoch, bins='auto')
 
 
+class GANOptimizer:
+    def __init__(self):
+        pass
+
+    def start_training(self, gen, dsc):
+        self.gen = gen
+        self.dsc = dsc
+
+    def end_training(self):
+        pass
+
+    def run_epoch(self, it, context):
+        raise NotImplementedError
+
+
 class TrainingRunner:
-    def __init__(self, name, dataset, gen, dsc, noise_generator,
+    def __init__(self, name, dataset, gen, dsc, noise_generator, gan_optimizer,
                  use_half=False, permanent_snapshot_period=20, out_path=None):
         self.name = name
         self.dataset = dataset
         self.noise_generator = noise_generator
+        self.gan_optimizer = gan_optimizer
+
         self.use_half = use_half
         self.permanent_snapshot_period = permanent_snapshot_period
 
@@ -64,20 +87,25 @@ class TrainingRunner:
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
         with SummaryWriter(log_dir=str(self.out_dir)) as writer:
-            context = TrainingContext(writer)
+            ctx = TrainingContext(writer, self.device, lambda n: self.gen_noise(n))
+            if self.gan_optimizer is not None:
+                self.gan_optimizer.start_training(self.gen, self.dsc)
+            try:
+                for e in range(epochs):
+                    ctx.epoch = e
+                    loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
+                    with tqdm(loader, desc=f'Epoch {e}') as iterable:
+                        it = (self.convert(x[0]) for x in iterable)
+                        self.run_epoch(it, ctx)
 
-            for e in range(epochs):
-                context.epoch = e
-                loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
-                with tqdm(loader, desc=f'Epoch {e}') as iterable:
-                    it = (x[0] for x in iterable)
-                    self.run_epoch(it, context)
+                    self.save_image_sample(ctx)
+                    self.save_snapshot(ctx, self.out_dir / 'current.snapshot')
 
-                self.save_image_sample(context)
-                self.save_snapshot(context, self.out_dir / 'current.snapshot')
-
-                if e > 0 and e % self.permanent_snapshot_period == 0:
-                    self.save_snapshot(context, self.out_dir / f'epoch-{e:05}.snapshot')
+                    if e > 0 and e % self.permanent_snapshot_period == 0:
+                        self.save_snapshot(ctx, self.out_dir / f'epoch-{e:05}.snapshot')
+            finally:
+                if self.gan_optimizer is not None:
+                    self.gan_optimizer.end_training()
 
     def save_image_sample(self, context):
         sample = self.sample_images()
@@ -108,8 +136,8 @@ class TrainingRunner:
     def sample_images(self):
         return self.gen(self.vis_params)
 
-    def run_epoch(self, it, context):
-        raise NotImplementedError
+    def run_epoch(self, it, ctx):
+        self.gan_optimizer.run_epoch(it, ctx)
 
     def gen_noise(self, n):
         return self.convert(self.noise_generator(n))

@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 from dogsgan.data.dogs import create_dogs_dataset
 from dogsgan.training.runner import TrainingRunner
+from dogsgan.training.optimizers import VanillayGANOptimizer
 
 
 ALPHA = 0.2
@@ -128,5 +129,9 @@ class DCGANRunner(TrainingRunner):
 
 
 if __name__ == '__main__':
-    runner = DCGANRunner()
+    opt = VanillayGANOptimizer()
+    runner = TrainingRunner(
+        'dcgan', create_dogs_dataset(),
+        Generator(), Discriminator(), lambda n: torch.randn((n, NOISE_DIM)), VanillayGANOptimizer())
+
     runner.run(batch_size=BATCH_SIZE)

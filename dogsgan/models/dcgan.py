@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from dogsgan.data.dogs import create_dogs_dataset
-from dogsgan.infra.runner import TrainingRunner
+from dogsgan.training.runner import TrainingRunner
 
 
 ALPHA = 0.2

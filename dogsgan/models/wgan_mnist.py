@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from torchvision import datasets, transforms
 
-from dogsgan.infra.runner import TrainingRunner
+from dogsgan.training.runner import TrainingRunner
 
 ALPHA = 0.2
 BATCH_SIZE = 64

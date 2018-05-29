@@ -100,7 +100,7 @@ class TrainingRunner:
                     loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
                     with tqdm(loader, desc=f'Epoch {e}') as iterable:
                         it = (self.convert(x[0]) for x in iterable)
-                        self.run_epoch(it, ctx)
+                        self.gan_optimizer.run_epoch(it, ctx)
 
                     self.save_image_sample(ctx)
                     self.save_snapshot(ctx, self.out_dir / 'current.snapshot')
@@ -139,7 +139,3 @@ class TrainingRunner:
 
     def sample_images(self):
         return self.gen(self.vis_params)
-
-    def run_epoch(self, it, ctx):
-        self.gan_optimizer.run_epoch(it, ctx)
-

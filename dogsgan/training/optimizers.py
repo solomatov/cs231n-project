@@ -103,6 +103,7 @@ class WGANOptimizer(GANOptimizer):
             except StopIteration:
                 break
 
+
 class WGANGPOptimizer(GANOptimizer):
     def __init__(self, lr=1e-4, betas=(0.5, 0.9), l=10.0, n_dsc=5):
         super().__init__()

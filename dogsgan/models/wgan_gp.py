@@ -91,67 +91,6 @@ class Discriminator(nn.Module):
         return self.collapse(z4.view(-1, (self.base * 8) * 4 * 4))
 
 
-class WGANTrainingRunner(TrainingRunner):
-    def __init__(self):
-        super().__init__('wgan-gp', create_dogs_dataset(),
-                         Generator(), Discriminator(), None)
-
-
-    def run_epoch(self, it, context):
-        while True:
-            try:
-                for _ in range(N_CRITIC):
-                    X_real = next(it)
-
-                    X_real = self.convert(X_real)
-                    N = X_real.shape[0]
-
-                    self.dsc.zero_grad()
-                    self.gen.zero_grad()
-                    X_real = self.convert(X_real)
-                    noise = self.gen.gen_noise(N)
-                    X_fake = self.gen(noise)
-                    critic_f = self.dsc(X_fake)
-                    critic_r = self.dsc(X_real)
-
-                    a = self.convert(torch.zeros([N, 1, 1, 1]).uniform_())
-
-                    X_mix = X_real * a + X_fake * (1.0 - a)
-                    gp_grad = torch.autograd.grad(outputs=self.dsc(X_mix), inputs=X_mix,
-                                                  grad_outputs=self.convert(torch.ones([N, 1])),
-                                                  retain_graph=True, create_graph=True)[0]
-
-                    gp = torch.mean((gp_grad.norm(dim=1).norm(dim=1).norm(dim=1) - 1)**2)
-                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r) + LAMBDA * gp
-
-                    critic_loss.backward()
-
-                    critic_grad = grad_norm(self.dsc)
-
-                    self.dsc_opt.step()
-
-                self.dsc.zero_grad()
-                self.gen.zero_grad()
-                noise = self.gen.gen_noise(BATCH_SIZE)
-                gen_loss = -torch.mean(self.dsc(self.gen(noise)))
-                gen_loss.backward()
-
-                gen_grad = grad_norm(self.gen)
-
-                self.gen_opt.step()
-
-                context.add_scalar('loss/critic', critic_loss)
-                context.add_scalar('loss/gen', gen_loss)
-
-                context.add_scalar('grad/critic', critic_grad)
-                context.add_scalar('grad/gen', gen_grad)
-                context.add_scalar('grad/gp', gp)
-
-                context.inc_iter()
-            except StopIteration:
-                break
-
-
 if __name__ == '__main__':
     runner = TrainingRunner('wgan_gp', create_dogs_dataset(), Generator(), Discriminator(), WGANGPOptimizer())
     runner.run(batch_size=BATCH_SIZE)

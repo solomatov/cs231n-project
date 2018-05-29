@@ -3,7 +3,7 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dogsgan.training.runner import TrainingRunner
+from dogsgan.training.runner import TrainingRunner, BaseGenerator
 from dogsgan.data.dogs import create_dogs_dataset
 
 ALPHA = 0.2
@@ -31,7 +31,7 @@ def init_modules(root):
             m.weight.data.normal_(0.0, WEIGHT_STD)
 
 
-class Generator(nn.Module):
+class Generator(BaseGenerator):
     def __init__(self):
         super().__init__()
 
@@ -57,6 +57,9 @@ class Generator(nn.Module):
         z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = self.conv4(z3)
         return F.tanh(z4)
+
+    def gen_noise(self, n):
+        return torch.randn((n, NOISE_DIM), device=self.get_device())
 
 
 class Discriminator(nn.Module):
@@ -90,8 +93,7 @@ class Discriminator(nn.Module):
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
         super().__init__('wgan-gp', create_dogs_dataset(),
-                         Generator(), Discriminator(),
-                         lambda n: torch.randn((n, NOISE_DIM)), None)
+                         Generator(), Discriminator(), None)
 
         self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
         self.gen_opt = optim.Adam(self.gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.9))
@@ -108,7 +110,7 @@ class WGANTrainingRunner(TrainingRunner):
                     self.dsc.zero_grad()
                     self.gen.zero_grad()
                     X_real = self.convert(X_real)
-                    noise = self.gen_noise(N)
+                    noise = self.gen.gen_noise(N)
                     X_fake = self.gen(noise)
                     critic_f = self.dsc(X_fake)
                     critic_r = self.dsc(X_real)
@@ -131,7 +133,7 @@ class WGANTrainingRunner(TrainingRunner):
 
                 self.dsc.zero_grad()
                 self.gen.zero_grad()
-                noise = self.gen_noise(BATCH_SIZE)
+                noise = self.gen.gen_noise(BATCH_SIZE)
                 gen_loss = -torch.mean(self.dsc(self.gen(noise)))
                 gen_loss.backward()
 

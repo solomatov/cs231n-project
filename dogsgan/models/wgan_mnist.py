@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from torchvision import datasets, transforms
 
-from dogsgan.training.runner import TrainingRunner
+from dogsgan.training.runner import TrainingRunner, BaseGenerator
 
 ALPHA = 0.2
 BATCH_SIZE = 64
@@ -21,7 +21,7 @@ def lrelu(x):
     return F.leaky_relu(x, ALPHA)
 
 
-class Generator(nn.Module):
+class Generator(BaseGenerator):
     def __init__(self):
         super().__init__()
 
@@ -42,6 +42,9 @@ class Generator(nn.Module):
         z3 = z2.view(-1, self.base * 2, 7, 7)
         z4 = lrelu(self.bn3(self.convt1(z3)))
         return F.tanh(self.convt2(z4))
+
+    def gen_noise(self, n):
+        return torch.randn((n, NOISE_DIM), device=self.get_device())
 
 
 class Discriminator(nn.Module):
@@ -84,8 +87,7 @@ mnist = datasets.MNIST(root='data/mnist', download=True, transform=transforms.To
 class WGANTrainingRunner(TrainingRunner):
     def __init__(self):
         super().__init__('wgan-mnist', mnist,
-                         Generator(), Discriminator(),
-                         lambda n: torch.randn((n, NOISE_DIM)), None)
+                         Generator(), Discriminator(), None)
 
         self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE)
         self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
@@ -98,7 +100,7 @@ class WGANTrainingRunner(TrainingRunner):
                     self.dsc.zero_grad()
                     self.gen.zero_grad()
                     X_real = X_real.to(self.device)
-                    X_fake = self.gen(self.gen_noise(X_real.shape[0]))
+                    X_fake = self.gen(self.gen.gen_noise(X_real.shape[0]))
                     critic_f = self.dsc(X_fake)
                     critic_r = self.dsc(X_real)
                     critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
@@ -108,7 +110,7 @@ class WGANTrainingRunner(TrainingRunner):
 
                 self.dsc.zero_grad()
                 self.gen.zero_grad()
-                noise = self.gen_noise(BATCH_SIZE)
+                noise = self.gen.gen_noise(BATCH_SIZE)
                 gen_loss = -torch.mean(self.dsc(self.gen(noise)))
                 gen_loss.backward()
                 self.gen_opt.step()

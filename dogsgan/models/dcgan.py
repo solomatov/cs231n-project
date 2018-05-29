@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from dogsgan.data.dogs import create_dogs_dataset
-from dogsgan.training.runner import TrainingRunner
+from dogsgan.training.runner import TrainingRunner, BaseGenerator
 from dogsgan.training.optimizers import VanillayGANOptimizer
 
 
@@ -30,7 +30,7 @@ def init_weights(module):
         init_weight(c)
 
 
-class Generator(nn.Module):
+class Generator(BaseGenerator):
     def __init__(self):
         super().__init__()
 
@@ -56,6 +56,9 @@ class Generator(nn.Module):
         z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = self.conv4(z3)
         return F.tanh(z4)
+
+    def gen_noise(self, n):
+        return torch.randn((n, NOISE_DIM), device=self.get_device())
 
 
 class Discriminator(nn.Module):
@@ -90,7 +93,7 @@ class DCGANRunner(TrainingRunner):
     def __init__(self):
         super().__init__('dcgan', create_dogs_dataset(),
                          Generator(), Discriminator(),
-                         lambda n: torch.randn((n, NOISE_DIM)))
+                         None)
 
         scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
         self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
@@ -104,7 +107,7 @@ class DCGANRunner(TrainingRunner):
 
             n = X_real.shape[0]
             X_real = self.convert(X_real)
-            X_fake = self.gen(self.gen_noise(n))
+            X_fake = self.gen(self.gen.gen_noise(n))
             y_fake = self.convert(torch.zeros((n, 1)))
             y_real = self.convert(torch.ones((n, 1)))
 
@@ -117,7 +120,7 @@ class DCGANRunner(TrainingRunner):
 
             self.dsc.zero_grad()
             self.gen.zero_grad()
-            X_fake = self.gen(self.gen_noise(n))
+            X_fake = self.gen(self.gen.gen_noise(n))
             y_ = self.dsc(X_fake)
 
             gen_loss = -torch.mean(torch.log(y_))
@@ -132,6 +135,6 @@ if __name__ == '__main__':
     opt = VanillayGANOptimizer()
     runner = TrainingRunner(
         'dcgan', create_dogs_dataset(),
-        Generator(), Discriminator(), lambda n: torch.randn((n, NOISE_DIM)), VanillayGANOptimizer())
+        Generator(), Discriminator(), VanillayGANOptimizer())
 
     runner.run(batch_size=BATCH_SIZE)

@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import torch
+import torch.nn as nn
 import torchvision
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
@@ -10,19 +11,15 @@ from tqdm import tqdm
 
 
 class TrainingContext:
-    def __init__(self, writer, device, noise_gen):
+    def __init__(self, writer, device):
         self.writer = writer
         self.device = device
-        self.noise_gen = noise_gen
 
         self.iter = 0
         self.epoch = 0
 
     def inc_iter(self):
         self.iter += 1
-
-    def gen_noise(self, n):
-        return self.noise_gen(n)
 
     def add_scalar(self, name, value):
         self.writer.add_scalar(name, value, self.iter)
@@ -36,6 +33,14 @@ class TrainingContext:
 
     def add_histogram(self, name, histogram):
         self.writer.add_histogram(name, histogram, self.epoch, bins='auto')
+
+
+class BaseGenerator(nn.Module):
+    def gen_noise(self, n):
+        raise NotImplementedError
+
+    def get_device(self):
+        return next(self.parameters()).device
 
 
 class GANOptimizer:
@@ -54,11 +59,10 @@ class GANOptimizer:
 
 
 class TrainingRunner:
-    def __init__(self, name, dataset, gen, dsc, noise_generator, gan_optimizer,
+    def __init__(self, name, dataset, gen, dsc, gan_optimizer,
                  use_half=False, permanent_snapshot_period=20, out_path=None):
         self.name = name
         self.dataset = dataset
-        self.noise_generator = noise_generator
         self.gan_optimizer = gan_optimizer
 
         self.use_half = use_half
@@ -81,13 +85,13 @@ class TrainingRunner:
         self.gen = self.convert(gen)
         self.dsc = self.convert(dsc)
 
-        self.vis_params = self.gen_noise(104)
+        self.vis_params = self.gen.gen_noise(104)
 
     def run(self, epochs=10000, batch_size=128):
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
         with SummaryWriter(log_dir=str(self.out_dir)) as writer:
-            ctx = TrainingContext(writer, self.device, lambda n: self.gen_noise(n))
+            ctx = TrainingContext(writer, self.device)
             if self.gan_optimizer is not None:
                 self.gan_optimizer.start_training(self.gen, self.dsc)
             try:
@@ -138,7 +142,4 @@ class TrainingRunner:
 
     def run_epoch(self, it, ctx):
         self.gan_optimizer.run_epoch(it, ctx)
-
-    def gen_noise(self, n):
-        return self.convert(self.noise_generator(n))
 

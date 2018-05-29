@@ -26,7 +26,7 @@ class VanillayGANOptimizer(GANOptimizer):
             self.dsc.zero_grad()
 
             n = X_real.shape[0]
-            X_fake = self.gen(ctx.gen_noise(n))
+            X_fake = self.gen(self.gen.gen_noise(n))
             y_fake = torch.zeros((n, 1), device=ctx.device)
             y_real = torch.ones((n, 1), device=ctx.device)
 
@@ -39,7 +39,7 @@ class VanillayGANOptimizer(GANOptimizer):
 
             self.dsc.zero_grad()
             self.gen.zero_grad()
-            X_fake = self.gen(ctx.gen_noise(n))
+            X_fake = self.gen(self.gen.gen_noise(n))
             y_ = self.dsc(X_fake)
 
             gen_loss = -torch.mean(torch.log(y_))

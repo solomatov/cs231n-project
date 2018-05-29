@@ -60,20 +60,26 @@ class GANOptimizer:
 
 class TrainingRunner:
     def __init__(self, name, dataset, gen, dsc, gan_optimizer,
-                 use_half=False, permanent_snapshot_period=20, out_path=None):
+                 use_half=False, permanent_snapshot_period=20, out_path=None, args=None):
         self.name = name
         self.dataset = dataset
         self.gan_optimizer = gan_optimizer
 
         self.use_half = use_half
         self.permanent_snapshot_period = permanent_snapshot_period
+        self.args = args
 
         now = datetime.datetime.now()
 
         if out_path is None:
             out_path = Path('out')
 
-        self.out_dir = out_path / f'{name}-{now:%Y%m%d-%H%M-%S}'
+        args_str = ''
+        if args is not None:
+            args_str = str(args).replace(', ', ',').replace('Namespace(', '').replace(')', '')
+            args_str = f'-{args_str}'
+
+        self.out_dir = out_path / f'{name}-{now:%Y%m%d-%H%M-%S}{args_str}'
         self.has_cuda = torch.cuda.device_count() > 0
         if self.has_cuda:
             self.device = torch.device('cuda:0')

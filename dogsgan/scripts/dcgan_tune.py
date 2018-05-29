@@ -8,7 +8,7 @@ if __name__ == '__main__':
     lr = 2e-4
     noise_dim = 1024
 
-    for base_dim in [64, 128, 196, 256, 320]:
+    for base_dim in [16, 32, 64, 96, 128, 160, 196, 256, 320]:
         opt = VanillaGANOptimizer()
         runner = TrainingRunner(
             f'dcgan-{base_dim}', create_dogs_dataset(),

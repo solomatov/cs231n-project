@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
-class VanillayGANOptimizer(GANOptimizer):
+class VanillaGANOptimizer(GANOptimizer):
     def __init__(self, dsc_lr=2e-4, gen_lr=2e-4, betas=(0.5, 0.9)):
         super().__init__()
 

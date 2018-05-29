@@ -1,7 +1,7 @@
 import argparse
 
 from dogsgan.data.dogs import create_dogs_dataset
-from dogsgan.training.optimizers import VanillayGANOptimizer
+from dogsgan.training.optimizers import VanillaGANOptimizer
 from dogsgan.training.runner import TrainingRunner
 
 import dogsgan.models.dogs as dogs
@@ -19,11 +19,11 @@ if __name__ == '__main__':
     base_dim = args.base_dim
     batch_size = args.batch_size
 
-    opt = VanillayGANOptimizer()
+    opt = VanillaGANOptimizer()
     runner = TrainingRunner(
         'dcgan', create_dogs_dataset(),
         dogs.Generator(base_dim=base_dim, noise_dim=noise_dim),
         dogs.Discriminator(base_dim=base_dim, sigmoid=True),
-        VanillayGANOptimizer(dsc_lr=lr, gen_lr=lr), args=args)
+        VanillaGANOptimizer(dsc_lr=lr, gen_lr=lr), args=args)
 
     runner.run(batch_size=batch_size)

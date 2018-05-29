@@ -22,7 +22,8 @@ if __name__ == '__main__':
     opt = VanillayGANOptimizer()
     runner = TrainingRunner(
         'dcgan', create_dogs_dataset(),
-        dogs.Generator(base_dim=base_dim, noise_dim=noise_dim), dogs.Discriminator(base_dim=base_dim, sigmoid=True),
+        dogs.Generator(base_dim=base_dim, noise_dim=noise_dim),
+        dogs.Discriminator(base_dim=base_dim, sigmoid=True),
         VanillayGANOptimizer(dsc_lr=lr, gen_lr=lr), args=args)
 
     runner.run(batch_size=batch_size)

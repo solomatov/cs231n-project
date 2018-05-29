@@ -86,10 +86,10 @@ class TrainingRunner:
         if snapshot.exists():
             shutil.move(str(snapshot), snapshot_backup)
 
-        data = self.get_snapshot()
         torch.save({
             'epoch': context.epoch,
-            'data': data
+            'gen': self.gen,
+            'dsc': self.dsc
         }, snapshot)
 
         if snapshot_backup.exists():
@@ -110,5 +110,3 @@ class TrainingRunner:
     def gen_noise(self, n):
         return self.convert(self.noise_generator(n))
 
-    def get_snapshot(self):
-        return {}

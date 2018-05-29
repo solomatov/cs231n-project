@@ -15,6 +15,7 @@ WEIGHT_STD = 0.02
 BASE_LR_128 = 0.0002
 GRADIENT_CLIP = 10.0
 
+
 def lrelu(x):
     return F.leaky_relu(x, ALPHA)
 
@@ -124,12 +125,6 @@ class DCGANRunner(TrainingRunner):
 
             context.add_scalar('loss/gen', gen_loss)
             context.add_scalar('loss/dsc', dsc_loss)
-
-    def get_snapshot(self):
-        return {
-            'gen': self.gen,
-            'dsc': self.dsc
-        }
 
 
 if __name__ == '__main__':

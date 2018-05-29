@@ -120,12 +120,6 @@ class WGANTrainingRunner(TrainingRunner):
             except StopIteration:
                 break
 
-    def get_snapshot(self):
-        return {
-            'gen': self.gen,
-            'critic': self.dsc
-        }
-
 
 if __name__ == '__main__':
     runner = WGANTrainingRunner()

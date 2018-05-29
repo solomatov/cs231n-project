@@ -113,7 +113,6 @@ class WGANTrainingRunner(TrainingRunner):
                     critic_f = self.dsc(X_fake)
                     critic_r = self.dsc(X_real)
 
-
                     a = self.convert(torch.zeros([N, 1, 1, 1]).uniform_())
 
                     X_mix = X_real * a + X_fake * (1.0 - a)
@@ -151,11 +150,6 @@ class WGANTrainingRunner(TrainingRunner):
             except StopIteration:
                 break
 
-    def get_snapshot(self):
-        return {
-            'gen': self.gen,
-            'critic': self.dsc
-        }
 
 if __name__ == '__main__':
     runner = WGANTrainingRunner()

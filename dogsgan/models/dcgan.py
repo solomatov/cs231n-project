@@ -1,12 +1,10 @@
 import torch
-import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
 from dogsgan.data.dogs import create_dogs_dataset
-from dogsgan.training.runner import TrainingRunner, BaseGenerator
 from dogsgan.training.optimizers import VanillayGANOptimizer
-
+from dogsgan.training.runner import TrainingRunner, BaseGenerator
 
 ALPHA = 0.2
 BATCH_SIZE = 128
@@ -89,52 +87,11 @@ class Discriminator(nn.Module):
         return F.sigmoid(z5)
 
 
-class DCGANRunner(TrainingRunner):
-    def __init__(self):
-        super().__init__('dcgan', create_dogs_dataset(),
-                         Generator(), Discriminator(),
-                         None)
-
-        scaled_lr = BASE_LR_128 * (BATCH_SIZE / 128)
-        self.dsc_opt = optim.Adam(self.dsc.parameters(), lr=scaled_lr / 6, betas=(0.5, 0.999))
-        self.gen_opt = optim.Adam(self.gen.parameters(), lr=scaled_lr, betas=(0.5, 0.999))
-
-    def run_epoch(self, it, context):
-        for X_real in it:
-            context.inc_iter()
-
-            self.dsc.zero_grad()
-
-            n = X_real.shape[0]
-            X_real = self.convert(X_real)
-            X_fake = self.gen(self.gen.gen_noise(n))
-            y_fake = self.convert(torch.zeros((n, 1)))
-            y_real = self.convert(torch.ones((n, 1)))
-
-            y = torch.cat([y_real, y_fake])
-            y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
-
-            dsc_loss = F.binary_cross_entropy(y_, y)
-            dsc_loss.backward()
-            self.dsc_opt.step()
-
-            self.dsc.zero_grad()
-            self.gen.zero_grad()
-            X_fake = self.gen(self.gen.gen_noise(n))
-            y_ = self.dsc(X_fake)
-
-            gen_loss = -torch.mean(torch.log(y_))
-            gen_loss.backward()
-            self.gen_opt.step()
-
-            context.add_scalar('loss/gen', gen_loss)
-            context.add_scalar('loss/dsc', dsc_loss)
-
-
 if __name__ == '__main__':
     opt = VanillayGANOptimizer()
     runner = TrainingRunner(
         'dcgan', create_dogs_dataset(),
-        Generator(), Discriminator(), VanillayGANOptimizer())
+        Generator(), Discriminator(),
+        VanillayGANOptimizer(dsc_lr=BASE_LR_128, gen_lr=BASE_LR_128))
 
     runner.run(batch_size=BATCH_SIZE)

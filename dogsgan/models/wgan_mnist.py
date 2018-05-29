@@ -1,10 +1,9 @@
 import torch
-import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torchvision import datasets, transforms
 
+from dogsgan.training.optimizers import WGANOptimizer
 from dogsgan.training.runner import TrainingRunner, BaseGenerator
 
 ALPHA = 0.2
@@ -83,47 +82,7 @@ class Discriminator(nn.Module):
 
 mnist = datasets.MNIST(root='data/mnist', download=True, transform=transforms.ToTensor())
 
-
-class WGANTrainingRunner(TrainingRunner):
-    def __init__(self):
-        super().__init__('wgan-mnist', mnist,
-                         Generator(), Discriminator(), None)
-
-        self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=LEARNING_RATE)
-        self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=LEARNING_RATE)
-
-    def run_epoch(self, it, context):
-        while True:
-            try:
-                for _ in range(N_CRITIC):
-                    X_real = next(it)
-                    self.dsc.zero_grad()
-                    self.gen.zero_grad()
-                    X_real = X_real.to(self.device)
-                    X_fake = self.gen(self.gen.gen_noise(X_real.shape[0]))
-                    critic_f = self.dsc(X_fake)
-                    critic_r = self.dsc(X_real)
-                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
-                    critic_loss.backward()
-                    self.dsc_opt.step()
-                    self.dsc.clip()
-
-                self.dsc.zero_grad()
-                self.gen.zero_grad()
-                noise = self.gen.gen_noise(BATCH_SIZE)
-                gen_loss = -torch.mean(self.dsc(self.gen(noise)))
-                gen_loss.backward()
-                self.gen_opt.step()
-
-                context.add_scalar('critic_loss', critic_loss)
-                context.add_scalar('gen_loss', gen_loss)
-
-                context.inc_iter()
-            except StopIteration:
-                break
-
-
 if __name__ == '__main__':
-    runner = WGANTrainingRunner()
+    runner = TrainingRunner('wgan-mnist', mnist, Generator(), Discriminator(), WGANOptimizer())
     runner.run(batch_size=BATCH_SIZE)
 

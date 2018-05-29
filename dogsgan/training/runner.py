@@ -54,7 +54,7 @@ class GANOptimizer:
     def end_training(self):
         pass
 
-    def run_epoch(self, it, context):
+    def run_epoch(self, it, ctx):
         raise NotImplementedError
 
 

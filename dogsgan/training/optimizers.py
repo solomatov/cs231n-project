@@ -51,17 +51,60 @@ class VanillayGANOptimizer(GANOptimizer):
 
 
 class WGANOptimizer(GANOptimizer):
-    def __init__(self, lr=5e-5):
+    def __init__(self, lr=5e-5, n_dsc=5):
         super().__init__()
 
         self.lr = lr
+        self.n_dsc = n_dsc
 
     def start_training(self, gen, dsc):
         super().start_training(gen, dsc)
+        self.dsc_opt = optim.RMSprop(self.dsc.parameters(), lr=self.lr)
+        self.gen_opt = optim.RMSprop(self.gen.parameters(), lr=self.lr)
 
+    def run_epoch(self, it, ctx):
+        while True:
+            try:
+                for _ in range(self.n_dsc):
+                    X_real = next(it)
+                    self.dsc.zero_grad()
+                    self.gen.zero_grad()
+                    n = X_real.shape[0]
+                    noise = self.gen.gen_noise(n)
+                    X_fake = self.gen(noise)
+                    critic_f = self.dsc(X_fake)
+                    critic_r = self.dsc(X_real)
+                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
 
+                    critic_loss.backward()
 
-    def end_training(self):
-        super().end_training()
+                    critic_grad = self.grad_norm(self.dsc)
+
+                    self.dsc_opt.step()
+                    self.dsc.clip()
+
+                self.dsc.zero_grad()
+                self.gen.zero_grad()
+                noise = self.gen.gen_noise(X_real.shape[0])
+                gen_loss = -torch.mean(self.dsc(self.gen(noise)))
+                gen_loss.backward()
+
+                gen_grad = self.grad_norm(self.gen)
+
+                self.gen_opt.step()
+
+                ctx.add_scalar('loss/critic', critic_loss)
+                ctx.add_scalar('loss/gen', gen_loss)
+
+                ctx.add_scalar('grad/critic', critic_grad)
+                ctx.add_scalar('grad/gen', gen_grad)
+
+                ctx.inc_iter()
+            except StopIteration:
+                break
+
+    def grad_norm(self, m):
+        return max(p.abs().max() for p in m.parameters())
+
 
 

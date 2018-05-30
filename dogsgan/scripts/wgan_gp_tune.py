@@ -8,8 +8,8 @@ if __name__ == '__main__':
     for l in [0.5, 1.0, 2.0, 4.0, 8.0, 10.0, 16.0]:
         runner = TrainingRunner(
             f'wgan_gp-{l}', create_dogs_dataset(),
-            dogs.Generator(),
-            dogs.Discriminator(),
+            dogs.Generator(base_dim=224),
+            dogs.Discriminator(batch_norm=False, base_dim=224),
             WGANGPOptimizer(l=l))
 
         runner.run(epochs=100)

@@ -68,6 +68,7 @@ class TrainingRunner:
         self.use_half = use_half
         self.permanent_snapshot_period = permanent_snapshot_period
         self.args = args
+        self.start_epoch = 0
 
         now = datetime.datetime.now()
 
@@ -101,7 +102,7 @@ class TrainingRunner:
             if self.gan_optimizer is not None:
                 self.gan_optimizer.start_training(self.gen, self.dsc)
             try:
-                for e in range(epochs):
+                for e in range(self.start_epoch, epochs):
                     ctx.epoch = e
                     loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
                     with tqdm(loader, desc=f'Epoch {e}') as iterable:
@@ -136,6 +137,17 @@ class TrainingRunner:
 
         if snapshot_backup.exists():
             snapshot_backup.unlink()
+
+    def load_snapshot(self, dir):
+        path = dir / 'current.snapshot'
+
+        data = torch.load(str(path))
+
+        self.gen = data['gen']
+        self.dsc = data['dsc']
+        self.start_epoch = data['epoch']
+        self.out_dir = dir
+
 
     def convert(self, data):
         result = data.to(self.device)

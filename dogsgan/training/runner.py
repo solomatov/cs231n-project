@@ -68,7 +68,7 @@ class TrainingRunner:
         self.use_half = use_half
         self.permanent_snapshot_period = permanent_snapshot_period
         self.args = args
-        self.start_epoch = 0
+        self.start_epoch = None
 
         now = datetime.datetime.now()
 
@@ -102,7 +102,13 @@ class TrainingRunner:
             if self.gan_optimizer is not None:
                 self.gan_optimizer.start_training(self.gen, self.dsc)
             try:
-                for e in range(self.start_epoch, epochs):
+
+                if self.start_epoch is None:
+                    epochs_range = range(epochs)
+                else:
+                    epochs_range = range(self.start_epoch, epochs)
+
+                for e in epochs_range:
                     ctx.epoch = e
                     loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
                     with tqdm(loader, desc=f'Epoch {e}') as iterable:

@@ -12,4 +12,4 @@ if __name__ == '__main__':
             dogs.Discriminator(batch_norm=False, base_dim=224),
             WGANGPOptimizer(l=l))
 
-        runner.run(epochs=100)
+        runner.run(epochs=100, batch_size=64)

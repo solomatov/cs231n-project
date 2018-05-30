@@ -13,7 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('--l', type=float, default=10.0, help='gradient penalty coefficent')
     parser.add_argument('--noise_dim', type=int, default=1024, help='noise dimension')
     parser.add_argument('--base_dim', type=int, default=128, help='base dimension')
-    parser.add_argument('--batch_size', type=int, default=128, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size')
     parser.add_argument('--load_from', type=str, default=None, help='directory to load from')
 
     args = parser.parse_args()

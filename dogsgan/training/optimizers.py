@@ -33,13 +33,9 @@ class VanillaGANOptimizer(GANOptimizer):
             y = torch.cat([y_real, y_fake])
             y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
 
-            max_y_ = torch.max(y_)
-            min_y_ = torch.min(y_)
+            # for unknown reason binary cross entropy doesn't behave itself very well
+            dsc_loss = -torch.mean(y * torch.log(y_) + (1 - y) * torch.log(1 - y_))
 
-            if max_y_ > 1.0 or min_y_ < 0.0 or torch.isnan(max_y_) or torch.isnan(min_y_):
-                print(f'max = {max_y_} min = {min_y_}')
-
-            dsc_loss = F.binary_cross_entropy(y_, y)
             dsc_loss.backward()
             self.dsc_opt.step()
 

@@ -30,6 +30,8 @@ class VanillaGANOptimizer(GANOptimizer):
             y_fake = torch.zeros((n, 1), device=ctx.device)
             y_real = torch.ones((n, 1), device=ctx.device)
 
+            print(torch.mean(X_fake))
+
             y = torch.cat([y_real, y_fake])
             y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
 

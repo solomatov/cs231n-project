@@ -32,9 +32,7 @@ class VanillaGANOptimizer(GANOptimizer):
 
             y = torch.cat([y_real, y_fake])
             y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
-
-            # for unknown reason binary cross entropy doesn't behave itself very well
-            dsc_loss = -torch.mean(y * torch.log(y_) + (1 - y) * torch.log(1 - y_))
+            dsc_loss = F.binary_cross_entropy(y_, y)
 
             dsc_loss.backward()
             self.dsc_opt.step()

@@ -34,6 +34,7 @@ class VanillaGANOptimizer(GANOptimizer):
             scores = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
             dsc_loss = binary_cross_entropy(scores, y).mean()
 
+
             dsc_loss.backward()
             self.dsc_opt.step()
 
@@ -48,6 +49,9 @@ class VanillaGANOptimizer(GANOptimizer):
 
             ctx.add_scalar('loss/gen', gen_loss)
             ctx.add_scalar('loss/dsc', dsc_loss)
+
+            ctx.add_scalar('param/gen', param_norm(self.gen))
+            ctx.add_scalar('param/dsc', param_norm(self.dsc))
 
 
 class WGANOptimizer(GANOptimizer):
@@ -174,6 +178,10 @@ def grad_norm(m):
     return max(p.grad.abs().max() for p in m.parameters())
 
 
+def param_norm(m):
+    return max(p.abs().max() for p in m.parameters())
+
+
 def binary_cross_entropy(scores, target):
     # a trick to implement a binary cross entropy loss mentioned in the GAN problem in HW3
-    return scores.clamp(min=0) - scores * target + (1 - scores.abs()).log()
+    return scores.clamp(min=0) - scores * target + (1 - scores.abs().exp()).log()

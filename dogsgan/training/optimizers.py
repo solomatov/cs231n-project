@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class VanillaGANOptimizer(GANOptimizer):
-    def __init__(self, dsc_lr=2e-4, gen_lr=2e-4, betas=(0.5, 0.9), loss='ls'):
+    def __init__(self, dsc_lr=2e-4, gen_lr=2e-4, betas=(0.5, 0.9), loss='bce'):
         super().__init__()
 
         self.dsc_lr = dsc_lr

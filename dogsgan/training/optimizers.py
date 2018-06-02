@@ -132,7 +132,7 @@ class WGANGPOptimizer(GANOptimizer):
                     critic_f = self.dsc(X_fake)
                     critic_r = self.dsc(X_real)
 
-                    a = torch.zeros([n, 1, 1, 1], device=ctx.device).uniform_()
+                    a = torch.zeros([1, 1, 1, 1], device=ctx.device).uniform_()
 
                     X_mix = X_real * a + X_fake * (1.0 - a)
                     gp_grad = torch.autograd.grad(outputs=self.dsc(X_mix), inputs=X_mix,

@@ -43,7 +43,7 @@ class VanillaGANOptimizer(GANOptimizer):
             X_fake = self.gen(self.gen.gen_noise(n))
             y_ = self.dsc(X_fake)
 
-            gen_loss = -torch.mean(torch.log(y_))
+            gen_loss = -torch.mean(torch.log(F.sigmoid(y_)))
             gen_loss.backward()
             self.gen_opt.step()
 
@@ -184,4 +184,4 @@ def param_norm(m):
 
 def binary_cross_entropy(scores, target):
     # a trick to implement a binary cross entropy loss mentioned in the GAN problem in HW3
-    return scores.clamp(min=0) - scores * target + (1 - scores.abs().exp()).log()
+    return scores.clamp(min=0) - scores * target + (1 + (-scores.abs()).exp()).log()

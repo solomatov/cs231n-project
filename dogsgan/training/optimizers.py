@@ -6,15 +6,21 @@ import torch.nn.functional as F
 
 
 class VanillaGANOptimizer(GANOptimizer):
-    def __init__(self, dsc_lr=2e-4, gen_lr=2e-4, betas=(0.5, 0.9)):
+    def __init__(self, dsc_lr=2e-4, gen_lr=2e-4, betas=(0.5, 0.9), loss='ls'):
         super().__init__()
 
         self.dsc_lr = dsc_lr
         self.gen_lr = gen_lr
         self.betas = betas
 
-        self.dsc_loss_fn = binary_cross_entropy
-        self.gen_loss_fn = lambda x: -torch.log(x)
+        if loss == 'bce':
+            self.dsc_loss_fn = binary_cross_entropy
+            self.gen_loss_fn = lambda x: -torch.log(x)
+        elif loss == 'ls':
+            self.dsc_loss_fn = least_squares_loss
+            self.gen_loss_fn = lambda x: 0.5 * (x - 1) ** 2
+        else:
+            raise Exception(f'Unknown loss function {loss}')
 
     def start_training(self, gen, dsc):
         super().start_training(gen, dsc)
@@ -187,3 +193,8 @@ def param_norm(m):
 def binary_cross_entropy(scores, target):
     # a trick to implement a binary cross entropy loss mentioned in the GAN problem in HW3
     return scores.clamp(min=0) - scores * target + (1 + (-scores.abs()).exp()).log()
+
+
+def least_squares_loss(scores, target):
+    scores = F.sigmoid(scores)
+    return 0.5 * (target * (scores - 1) ** 2 + (1 - target) * (scores) ** 2)

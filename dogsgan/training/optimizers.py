@@ -13,6 +13,9 @@ class VanillaGANOptimizer(GANOptimizer):
         self.gen_lr = gen_lr
         self.betas = betas
 
+        self.dsc_loss_fn = binary_cross_entropy
+        self.gen_loss_fn = lambda x: -torch.log(x)
+
     def start_training(self, gen, dsc):
         super().start_training(gen, dsc)
 
@@ -32,8 +35,7 @@ class VanillaGANOptimizer(GANOptimizer):
 
             y = torch.cat([y_real, y_fake])
             scores = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
-            dsc_loss = binary_cross_entropy(scores, y).mean()
-
+            dsc_loss = self.dsc_loss_fn(scores, y).mean()
 
             dsc_loss.backward()
             self.dsc_opt.step()
@@ -43,7 +45,7 @@ class VanillaGANOptimizer(GANOptimizer):
             X_fake = self.gen(self.gen.gen_noise(n))
             y_ = self.dsc(X_fake)
 
-            gen_loss = -torch.mean(torch.log(F.sigmoid(y_)))
+            gen_loss = torch.mean(self.gen_loss_fn(F.sigmoid(y_)))
             gen_loss.backward()
             self.gen_opt.step()
 

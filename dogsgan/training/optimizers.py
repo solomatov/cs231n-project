@@ -31,7 +31,7 @@ class VanillaGANOptimizer(GANOptimizer):
             y_real = torch.ones((n, 1), device=ctx.device)
 
             y = torch.cat([y_real, y_fake])
-            y_ = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
+            y_ = F.sigmoid(torch.cat([self.dsc(X_real), self.dsc(X_fake)]))
             dsc_loss = F.binary_cross_entropy(y_, y)
 
             dsc_loss.backward()

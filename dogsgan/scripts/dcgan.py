@@ -26,7 +26,7 @@ if __name__ == '__main__':
     runner = TrainingRunner(
         'dcgan', create_dogs_dataset(),
         dogs.Generator(base_dim=base_dim, noise_dim=noise_dim),
-        dogs.Discriminator(base_dim=base_dim, sigmoid=True),
+        dogs.Discriminator(base_dim=base_dim),
         VanillaGANOptimizer(dsc_lr=lr, gen_lr=lr), args=args)
 
     if load_from is not None:

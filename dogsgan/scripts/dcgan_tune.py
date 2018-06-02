@@ -13,7 +13,7 @@ if __name__ == '__main__':
         runner = TrainingRunner(
             f'dcgan-{base_dim}', create_dogs_dataset(),
             dogs.Generator(base_dim=base_dim, noise_dim=noise_dim),
-            dogs.Discriminator(base_dim=base_dim, sigmoid=True),
+            dogs.Discriminator(base_dim=base_dim),
             VanillaGANOptimizer(dsc_lr=lr, gen_lr=lr))
 
         runner.run(epochs=100)

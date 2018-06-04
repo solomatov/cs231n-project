@@ -41,7 +41,7 @@ def inception_score(images):
     for i in range(0, scores.shape[0]):
         divs.append(kl_divergence(scores[i, :], mdist))
 
-    print(torch.Tensor(divs).mean().exp())
+    return torch.Tensor(divs).mean().exp().item()
 
 
 if __name__ == '__main__':

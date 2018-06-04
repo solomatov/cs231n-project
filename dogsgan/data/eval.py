@@ -23,7 +23,7 @@ if __name__ == '__main__':
         normalize=False,
         image_transforms=[transforms.Resize((299, 299))]
     )
-    dataloader = DataLoader(dogs_dataset, batch_size=16)
+    dataloader = DataLoader(dogs_dataset, batch_size=32)
 
     with torch.no_grad():
         scores = []

@@ -24,8 +24,8 @@ class TrainingContext:
     def inc_iter(self):
         self.iter += 1
 
-    def add_scalar(self, name, value):
-        self.writer.add_scalar(name, value, self.iter)
+    def add_scalar(self, name, value, epoch=False):
+        self.writer.add_scalar(name, value, self.epoch if epoch else self.iter)
 
     def add_image(self, name, image):
         self.writer.add_image(name, image, self.iter)
@@ -137,8 +137,8 @@ class TrainingRunner:
         dataset = generated_images_dataset(self.gen)
         score, std = inception_score(dataset)
         self.gen.train(True)
-        context.add_scalar('score/inception', score)
-        context.add_scalar('score/inception_std', std)
+        context.add_scalar('score/inception', score, epoch=True)
+        context.add_scalar('score/inception_std', std, epoch=True)
 
     def save_snapshot(self, context, target):
         snapshot = target

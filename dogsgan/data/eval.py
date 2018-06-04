@@ -51,3 +51,5 @@ if __name__ == '__main__':
         image_transforms=[transforms.Resize((299, 299))]
     )
     print(inception_score(dogs_dataset))
+
+    #15.44832992553711 +- 3.0557126998901367

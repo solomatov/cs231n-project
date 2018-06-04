@@ -15,19 +15,21 @@ def kl_divergence(p, q):
     return torch.sum(p * torch.log(p / q))
 
 
-if __name__ == '__main__':
+def inception_score(images):
     inception = inception_v3(pretrained=True)
-    inception.train(False)
 
-    dogs_dataset = create_dogs_dataset(
-        normalize=False,
-        image_transforms=[transforms.Resize((299, 299))]
-    )
-    dataloader = DataLoader(dogs_dataset, batch_size=32)
+    has_cuda = torch.cuda.device_count() > 0
+    if has_cuda:
+        inception = inception.cuda()
+
+    inception.train(False)
 
     with torch.no_grad():
         scores = []
-        for X, _ in tqdm(dataloader):
+        for X, _ in tqdm(images):
+            if has_cuda:
+                X = torch.Tensor(X).cuda()
+
             scores.append(F.softmax(inception(X), 1))
 
         scores = torch.cat(scores, 0)
@@ -40,3 +42,12 @@ if __name__ == '__main__':
         divs.append(kl_divergence(scores[i, :], mdist))
 
     print(torch.Tensor(divs).mean().exp())
+
+
+if __name__ == '__main__':
+    dogs_dataset = create_dogs_dataset(
+        normalize=False,
+        image_transforms=[transforms.Resize((299, 299))]
+    )
+    dataloader = DataLoader(dogs_dataset, batch_size=32)
+    print(inception_score(dataloader))

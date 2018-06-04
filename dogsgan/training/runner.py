@@ -135,9 +135,10 @@ class TrainingRunner:
     def calculate_inception_score(self, context):
         self.gen.train(False)
         dataset = generated_images_dataset(self.gen)
-        score = inception_score(dataset)
+        score, std = inception_score(dataset)
         self.gen.train(True)
         context.add_scalar('score/inception', score)
+        context.add_scalar('score/inception_std', std)
 
     def save_snapshot(self, context, target):
         snapshot = target

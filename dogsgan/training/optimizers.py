@@ -42,8 +42,10 @@ class VanillaGANOptimizer(GANOptimizer):
             y = torch.cat([y_real, y_fake])
             scores = torch.cat([self.dsc(X_real), self.dsc(X_fake)])
             dsc_loss = self.dsc_loss_fn(scores, y).mean()
-
             dsc_loss.backward()
+
+            dsc_grad = grad_norm(self.dsc)
+
             self.dsc_opt.step()
 
             self.dsc.zero_grad()
@@ -60,6 +62,9 @@ class VanillaGANOptimizer(GANOptimizer):
 
             ctx.add_scalar('param/gen', param_norm(self.gen))
             ctx.add_scalar('param/dsc', param_norm(self.dsc))
+
+            ctx.add_scalar('grad/gen', grad_norm(self.gen))
+            ctx.add_scalar('grad/dsc', dsc_grad)
 
 
 class WGANOptimizer(GANOptimizer):

@@ -27,12 +27,8 @@ if __name__ == '__main__':
 
     with torch.no_grad():
         scores = []
-        count = 0
         for X, _ in tqdm(dataloader):
             scores.append(F.softmax(inception(X), 1))
-            count += 1
-            if count == 20:
-                break
 
         scores = torch.cat(scores, 0)
 

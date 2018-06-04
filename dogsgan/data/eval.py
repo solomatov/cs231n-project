@@ -26,7 +26,8 @@ def inception_score(images):
 
     with torch.no_grad():
         scores = []
-        for X, _ in tqdm(images):
+
+        for X, _ in tqdm(DataLoader(images, batch_size=64), desc='Inception Score'):
             if has_cuda:
                 X = torch.Tensor(X).cuda()
 

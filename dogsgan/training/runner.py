@@ -9,6 +9,9 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from dogsgan.data.gen import generated_images_dataset
+from dogsgan.data.eval import inception_score
+
 
 class TrainingContext:
     def __init__(self, writer, device):
@@ -116,6 +119,7 @@ class TrainingRunner:
                         self.gan_optimizer.run_epoch(it, ctx)
 
                     self.save_image_sample(ctx)
+                    self.calculate_inception_score(ctx)
                     self.save_snapshot(ctx, self.out_dir / 'current.snapshot')
 
                     if e > 0 and e % self.permanent_snapshot_period == 0:
@@ -127,6 +131,13 @@ class TrainingRunner:
     def save_image_sample(self, context):
         sample = self.sample_images()
         context.add_image_batch('Generated Images', sample)
+
+    def calculate_inception_score(self, context):
+        self.gen.train(False)
+        dataset = generated_images_dataset(self.gen)
+        score = inception_score(dataset)
+        self.gen.train(True)
+        context.add_scalar('score/inception', score)
 
     def save_snapshot(self, context, target):
         snapshot = target

@@ -7,7 +7,7 @@ from dogsgan.models.util import init_weights
 
 
 class Generator(BaseGenerator):
-    def __init__(self, base_dim=128, noise_dim=1024, alpha=0.2):
+    def __init__(self, base_dim=128, noise_dim=1024, alpha=0.2, initializer=init_weights):
         super().__init__()
 
         self.base_dim = base_dim
@@ -24,7 +24,7 @@ class Generator(BaseGenerator):
         self.bn3 = nn.BatchNorm2d(base_dim)
         self.conv4 = nn.ConvTranspose2d(base_dim, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
-        init_weights(self)
+        initializer(self)
 
     def forward(self, z):
         z0 = F.relu(self.bn0(self.noise_project(z)).view(-1, self.base_dim * 8, 4, 4))
@@ -39,7 +39,7 @@ class Generator(BaseGenerator):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=False):
+    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=False, initalizer=init_weights):
         super().__init__()
 
         self.base_dim = base_dim
@@ -55,7 +55,7 @@ class Discriminator(nn.Module):
         self.n4 = nn.BatchNorm2d(base_dim * 8, affine=affine) if batch_norm else nn.LayerNorm([base_dim * 8, 4, 4])
         self.collapse = nn.Linear((base_dim * 8) * 4 * 4, 1)
 
-        init_weights(self)
+        initalizer(self)
 
     def forward(self, x):
         def lrelu(x):

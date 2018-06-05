@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     runner = TrainingRunner('wgan', create_dogs_dataset(),
                             dogs.Generator(noise_dim=noise_dim, base_dim=base_dim, affine=False),
-                            dogs.Discriminator(base_dim=base_dim, affine=False, clips_size=clip), WGANOptimizer(lr=lr), args=args)
+                            dogs.Discriminator(base_dim=base_dim, affine=False, clip_size=clip), WGANOptimizer(lr=lr), args=args)
 
     if load_from is not None:
         runner.load_snapshot(load_from)

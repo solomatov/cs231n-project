@@ -27,10 +27,13 @@ class Generator(BaseGenerator):
         initializer(self)
 
     def forward(self, z):
-        z0 = F.relu(self.bn0(self.noise_project(z)).view(-1, self.base_dim * 8, 4, 4))
-        z1 = F.relu(self.bn1(self.conv1(z0)))
-        z2 = F.relu(self.bn2(self.conv2(z1)))
-        z3 = F.relu(self.bn3(self.conv3(z2)))
+        def lrelu(x):
+            return F.leaky_relu(x, self.alpha)
+
+        z0 = lrelu(self.bn0(self.noise_project(z)).view(-1, self.base_dim * 8, 4, 4))
+        z1 = lrelu(self.bn1(self.conv1(z0)))
+        z2 = lrelu(self.bn2(self.conv2(z1)))
+        z3 = lrelu(self.bn3(self.conv3(z2)))
         z4 = self.conv4(z3)
         return F.tanh(z4)
 
@@ -39,12 +42,12 @@ class Generator(BaseGenerator):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=True, initalizer=init_weights, clips_size=0.02):
+    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=True, initalizer=init_weights, clip_size=0.02):
         super().__init__()
 
         self.base_dim = base_dim
         self.alpha = alpha
-        self.clip_size = clips_size
+        self.clip_size = clip_size
 
         self.conv1 = nn.Conv2d(3, base_dim, (5, 5), padding=2, stride=2)
         self.n1 = nn.BatchNorm2d(base_dim, affine=affine) if batch_norm else nn.LayerNorm([base_dim, 32, 32])

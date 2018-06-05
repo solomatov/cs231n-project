@@ -39,11 +39,12 @@ class Generator(BaseGenerator):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=True, initalizer=init_weights):
+    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=True, initalizer=init_weights, clips_size=0.02):
         super().__init__()
 
         self.base_dim = base_dim
         self.alpha = alpha
+        self.clip_size = clips_size
 
         self.conv1 = nn.Conv2d(3, base_dim, (5, 5), padding=2, stride=2)
         self.n1 = nn.BatchNorm2d(base_dim, affine=affine) if batch_norm else nn.LayerNorm([base_dim, 32, 32])
@@ -69,9 +70,9 @@ class Discriminator(nn.Module):
 
         return z5
 
-    def clip(self, clip=0.01):
+    def clip(self):
         for m in self.modules():
             if not isinstance(m, nn.BatchNorm2d):
                 for p in m.parameters():
-                    p.data.clamp_(-clip, clip)
+                    p.data.clamp_(-self.clip_size, self.clip_size)
 

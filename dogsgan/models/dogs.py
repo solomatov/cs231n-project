@@ -39,20 +39,20 @@ class Generator(BaseGenerator):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True):
+    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=False):
         super().__init__()
 
         self.base_dim = base_dim
         self.alpha = alpha
 
         self.conv1 = nn.Conv2d(3, base_dim, (5, 5), padding=2, stride=2)
-        self.n1 = nn.BatchNorm2d(base_dim) if batch_norm else nn.LayerNorm([base_dim, 32, 32])
+        self.n1 = nn.BatchNorm2d(base_dim, affine=affine) if batch_norm else nn.LayerNorm([base_dim, 32, 32])
         self.conv2 = nn.Conv2d(base_dim, base_dim * 2, (5, 5), padding=2, stride=2)
-        self.n2 = nn.BatchNorm2d(base_dim * 2) if batch_norm else nn.LayerNorm([base_dim * 2, 16, 16])
+        self.n2 = nn.BatchNorm2d(base_dim * 2, affine=affine) if batch_norm else nn.LayerNorm([base_dim * 2, 16, 16])
         self.conv3 = nn.Conv2d(base_dim * 2, base_dim * 4, (5, 5), padding=2, stride=2)
-        self.n3 = nn.BatchNorm2d(base_dim * 4) if batch_norm else nn.LayerNorm([base_dim * 4, 8, 8])
+        self.n3 = nn.BatchNorm2d(base_dim * 4, affine=affine) if batch_norm else nn.LayerNorm([base_dim * 4, 8, 8])
         self.conv4 = nn.Conv2d(base_dim * 4, base_dim * 8, (5, 5), padding=2, stride=2)
-        self.n4 = nn.BatchNorm2d(base_dim * 8) if batch_norm else nn.LayerNorm([base_dim * 8, 4, 4])
+        self.n4 = nn.BatchNorm2d(base_dim * 8, affine=affine) if batch_norm else nn.LayerNorm([base_dim * 8, 4, 4])
         self.collapse = nn.Linear((base_dim * 8) * 4 * 4, 1)
 
         init_weights(self)

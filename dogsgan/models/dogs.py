@@ -27,13 +27,10 @@ class Generator(BaseGenerator):
         init_weights(self)
 
     def forward(self, z):
-        def lrelu(x):
-            return F.leaky_relu(x, self.alpha)
-
-        z0 = lrelu(self.bn0(self.noise_project(z)).view(-1, self.base_dim * 8, 4, 4))
-        z1 = lrelu(self.bn1(self.conv1(z0)))
-        z2 = lrelu(self.bn2(self.conv2(z1)))
-        z3 = lrelu(self.bn3(self.conv3(z2)))
+        z0 = F.relu(self.bn0(self.noise_project(z)).view(-1, self.base_dim * 8, 4, 4))
+        z1 = F.relu(self.bn1(self.conv1(z0)))
+        z2 = F.relu(self.bn2(self.conv2(z1)))
+        z3 = F.relu(self.bn3(self.conv3(z2)))
         z4 = self.conv4(z3)
         return F.tanh(z4)
 

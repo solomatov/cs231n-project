@@ -2,7 +2,7 @@ import torch.utils.data as data
 from torchvision import datasets, transforms
 
 
-def generated_images_dataset(gen, size=10000):
+def generated_images_dataset(gen, size=1000):
     class MyDataSet(data.Dataset):
         def __getitem__(self, index):
             noise = gen.gen_noise(1)

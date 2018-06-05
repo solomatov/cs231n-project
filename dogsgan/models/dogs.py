@@ -7,7 +7,7 @@ from dogsgan.models.util import init_weights
 
 
 class Generator(BaseGenerator):
-    def __init__(self, base_dim=128, noise_dim=1024, alpha=0.2, initializer=init_weights):
+    def __init__(self, base_dim=128, noise_dim=1024, alpha=0.2, initializer=init_weights, affine=True):
         super().__init__()
 
         self.base_dim = base_dim
@@ -15,13 +15,13 @@ class Generator(BaseGenerator):
         self.alpha = alpha
 
         self.noise_project = nn.Linear(noise_dim, 4 * 4 * base_dim * 8)
-        self.bn0 = nn.BatchNorm1d(4 * 4 * base_dim * 8)
+        self.bn0 = nn.BatchNorm1d(4 * 4 * base_dim * 8, affine=affine)
         self.conv1 = nn.ConvTranspose2d(base_dim * 8, base_dim * 4, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn1 = nn.BatchNorm2d(base_dim * 4)
+        self.bn1 = nn.BatchNorm2d(base_dim * 4, affine=affine)
         self.conv2 = nn.ConvTranspose2d(base_dim * 4, base_dim * 2, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn2 = nn.BatchNorm2d(base_dim * 2)
+        self.bn2 = nn.BatchNorm2d(base_dim * 2, affine=affine)
         self.conv3 = nn.ConvTranspose2d(base_dim * 2, base_dim, (5, 5), stride=2, padding=2, output_padding=1)
-        self.bn3 = nn.BatchNorm2d(base_dim)
+        self.bn3 = nn.BatchNorm2d(base_dim, affine=affine)
         self.conv4 = nn.ConvTranspose2d(base_dim, 3, (5, 5), stride=2, padding=2, output_padding=1)
 
         initializer(self)
@@ -39,7 +39,7 @@ class Generator(BaseGenerator):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=False, initalizer=init_weights):
+    def __init__(self, base_dim=128, alpha=0.2, batch_norm=True, affine=True, initalizer=init_weights):
         super().__init__()
 
         self.base_dim = base_dim
@@ -69,7 +69,7 @@ class Discriminator(nn.Module):
 
         return z5
 
-    def clip(self, clip=0.02):
+    def clip(self, clip=0.01):
         for m in self.modules():
             if not isinstance(m, nn.BatchNorm2d):
                 for p in m.parameters():

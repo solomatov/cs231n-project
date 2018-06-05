@@ -72,3 +72,9 @@ class Discriminator(nn.Module):
 
         return z5
 
+    def clip(self, clip=0.02):
+        for m in self.modules():
+            if not isinstance(m, nn.BatchNorm2d):
+                for p in m.parameters():
+                    p.data.clamp_(-clip, clip)
+

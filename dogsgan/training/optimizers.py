@@ -110,6 +110,9 @@ class WGANOptimizer(GANOptimizer):
 
                 self.gen_opt.step()
 
+                ctx.add_scalar('param/gen', param_norm(self.gen))
+                ctx.add_scalar('param/dsc', param_norm(self.dsc))
+
                 ctx.add_scalar('loss/critic', critic_loss)
                 ctx.add_scalar('loss/gen', gen_loss)
 
@@ -181,6 +184,9 @@ class WGANGPOptimizer(GANOptimizer):
                 ctx.add_scalar('grad/critic', critic_grad)
                 ctx.add_scalar('grad/gen', gen_grad)
                 ctx.add_scalar('grad/gp', gp)
+
+                ctx.add_scalar('param/gen', param_norm(self.gen))
+                ctx.add_scalar('param/dsc', param_norm(self.dsc))
 
                 ctx.inc_iter()
             except StopIteration:

@@ -63,7 +63,7 @@ class GANOptimizer:
 
 class TrainingRunner:
     def __init__(self, name, dataset, gen, dsc, gan_optimizer,
-                 use_half=False, permanent_snapshot_period=20, out_path=None, args=None):
+                 use_half=False, permanent_snapshot_period=20, out_path=None, args=None, n_class=120):
         self.name = name
         self.dataset = dataset
         self.gan_optimizer = gan_optimizer
@@ -72,6 +72,7 @@ class TrainingRunner:
         self.permanent_snapshot_period = permanent_snapshot_period
         self.args = args
         self.start_epoch = None
+        self.n_class = n_class
 
         now = datetime.datetime.now()
 
@@ -115,7 +116,12 @@ class TrainingRunner:
                     ctx.epoch = e
                     loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=self.has_cuda)
                     with tqdm(loader, desc=f'Epoch {e}') as iterable:
-                        it = (self.convert(x[0]) for x in iterable)
+                        def one_hot(c):
+                            result = torch.zeros((c.shape[0], self.n_class))
+                            result[range(c.shape[0]), c] = 1.0
+                            return result
+
+                        it = ((self.convert(x[0]), one_hot(x[1])) for x in iterable)
                         self.gan_optimizer.run_epoch(it, ctx)
 
                     self.save_image_sample(ctx)

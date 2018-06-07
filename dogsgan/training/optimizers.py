@@ -29,7 +29,7 @@ class VanillaGANOptimizer(GANOptimizer):
         self.gen_opt = optim.Adam(self.gen.parameters(), lr=self.gen_lr, betas=self.betas)
 
     def run_epoch(self, it, ctx):
-        for X_real in it:
+        for X_real, labels in it:
             ctx.inc_iter()
 
             self.dsc.zero_grad()
@@ -83,7 +83,7 @@ class WGANOptimizer(GANOptimizer):
         while True:
             try:
                 for _ in range(self.n_dsc):
-                    X_real = next(it)
+                    X_real, _ = next(it)
                     self.dsc.zero_grad()
                     self.gen.zero_grad()
                     n = X_real.shape[0]
@@ -142,7 +142,7 @@ class WGANGPOptimizer(GANOptimizer):
         while True:
             try:
                 for _ in range(self.n_dsc):
-                    X_real = next(it)
+                    X_real, _ = next(it)
 
                     n = X_real.shape[0]
                     self.dsc.zero_grad()

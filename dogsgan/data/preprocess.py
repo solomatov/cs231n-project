@@ -44,12 +44,12 @@ if __name__ == '__main__':
         w = (xmax - xmin)
         h = (ymax - ymin)
 
-        if w / h > RESIZE_THRESHOLD or h / w > RESIZE_THRESHOLD:
-            skipped += 1
-
-            if skipped % 1000 == 0:
-                print(f'skipped {skipped}')
-            continue
+        # if w / h > RESIZE_THRESHOLD or h / w > RESIZE_THRESHOLD:
+        #     skipped += 1
+        #
+        #     if skipped % 1000 == 0:
+        #         print(f'skipped {skipped}')
+        #     continue
 
         im = Image.open(i)
         result = im.resize(image_size, Image.ANTIALIAS)

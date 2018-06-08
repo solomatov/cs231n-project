@@ -45,7 +45,8 @@ def inception_score(images):
     for i in range(0, scores.shape[0]):
         divs.append(kl_divergence(scores[i, :], mdist))
 
-    return torch.Tensor(divs).mean().exp().item(), torch.Tensor(divs).std().exp().item()
+    sd = torch.Tensor(divs).std().exp().item()
+    return torch.Tensor(divs).mean().exp().item(), sd / (scores.shape[0] ** 0.5)
 
 
 if __name__ == '__main__':
@@ -55,4 +56,4 @@ if __name__ == '__main__':
     )
     print(inception_score(dogs_dataset))
 
-    #15.44832992553711 +- 3.0557126998901367
+    #14.634567260742188, 0.02150835660283012

@@ -164,8 +164,8 @@ class TrainingRunner:
 
         torch.save({
             'epoch': context.epoch,
-            'gen': self.gen.cpu(),
-            'dsc': self.dsc.cpu()
+            'gen': self.gen,
+            'dsc': self.dsc
         }, snapshot)
 
         if snapshot_backup.exists():

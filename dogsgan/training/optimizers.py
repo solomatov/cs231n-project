@@ -89,13 +89,13 @@ class WGANOptimizer(GANOptimizer):
                     n = X_real.shape[0]
                     noise = self.gen.gen_noise(n)
                     X_fake = self.gen(noise)
-                    critic_f = self.dsc(X_fake)
-                    critic_r = self.dsc(X_real)
-                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r)
+                    dsc_f = self.dsc(X_fake)
+                    dsc_r = self.dsc(X_real)
+                    dsc_loss = torch.mean(dsc_f) - torch.mean(dsc_r)
 
-                    critic_loss.backward()
+                    dsc_loss.backward()
 
-                    critic_grad = grad_norm(self.dsc)
+                    dsc_grad = grad_norm(self.dsc)
 
                     self.dsc_opt.step()
                     self.dsc.clip()
@@ -113,10 +113,10 @@ class WGANOptimizer(GANOptimizer):
                 ctx.add_scalar('param/gen', param_norm(self.gen))
                 ctx.add_scalar('param/dsc', param_norm(self.dsc))
 
-                ctx.add_scalar('loss/critic', critic_loss)
+                ctx.add_scalar('loss/dsc', dsc_loss)
                 ctx.add_scalar('loss/gen', gen_loss)
 
-                ctx.add_scalar('grad/critic', critic_grad)
+                ctx.add_scalar('grad/dsc', dsc_grad)
                 ctx.add_scalar('grad/gen', gen_grad)
 
                 ctx.inc_iter()
@@ -149,8 +149,8 @@ class WGANGPOptimizer(GANOptimizer):
                     self.gen.zero_grad()
                     noise = self.gen.gen_noise(n)
                     X_fake = self.gen(noise)
-                    critic_f = self.dsc(X_fake)
-                    critic_r = self.dsc(X_real)
+                    dsc_f = self.dsc(X_fake)
+                    dsc_r = self.dsc(X_real)
 
                     a = torch.zeros([1, 1, 1, 1], device=ctx.device).uniform_()
 
@@ -160,11 +160,11 @@ class WGANGPOptimizer(GANOptimizer):
                                                   retain_graph=True, create_graph=True)[0]
 
                     gp = torch.mean((gp_grad.norm(dim=1).norm(dim=1).norm(dim=1) - 1) ** 2)
-                    critic_loss = torch.mean(critic_f) - torch.mean(critic_r) + self.l * gp
+                    dsc_loss = torch.mean(dsc_f) - torch.mean(dsc_r) + self.l * gp
 
-                    critic_loss.backward()
+                    dsc_loss.backward()
 
-                    critic_grad = grad_norm(self.dsc)
+                    dsc_grad = grad_norm(self.dsc)
 
                     self.dsc_opt.step()
 
@@ -178,10 +178,10 @@ class WGANGPOptimizer(GANOptimizer):
 
                 self.gen_opt.step()
 
-                ctx.add_scalar('loss/critic', critic_loss)
+                ctx.add_scalar('loss/dsc', dsc_loss)
                 ctx.add_scalar('loss/gen', gen_loss)
 
-                ctx.add_scalar('grad/critic', critic_grad)
+                ctx.add_scalar('grad/dsc', dsc_grad)
                 ctx.add_scalar('grad/gen', gen_grad)
                 ctx.add_scalar('grad/gp', gp)
 

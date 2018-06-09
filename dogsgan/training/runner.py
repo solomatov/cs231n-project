@@ -135,7 +135,7 @@ class TrainingRunner:
                     self.gan_optimizer.end_training()
 
     def evaluate(self):
-        size = 100000
+        size = 10000
         score, std = self.get_inception_score(size=size)
         print(f'Inception Score: {score:.3f} +- {std / (size ** 0.5):.3f}')
 

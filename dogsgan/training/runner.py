@@ -181,7 +181,6 @@ class TrainingRunner:
         self.start_epoch = data['epoch']
         self.out_dir = dir
 
-
     def convert(self, data):
         result = data.to(self.device)
         if self.use_half:

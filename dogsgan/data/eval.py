@@ -16,7 +16,7 @@ def apply_classifier(classifier, images):
     has_cuda = torch.cuda.device_count() > 0
     with torch.no_grad():
         scores = []
-        for X, _ in tqdm(DataLoader(images, batch_size=64), desc=''):
+        for X, _ in tqdm(DataLoader(images, batch_size=64), desc='Inception Score'):
             if has_cuda:
                 X = torch.Tensor(X).cuda()
             scores.append(F.softmax(classifier(X), 1))

@@ -98,7 +98,7 @@ class TrainingRunner:
 
         self.vis_params = self.gen.gen_noise(104)
 
-    def run(self, epochs=10000, batch_size=128):
+    def train(self, epochs=10000, batch_size=128):
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
         with SummaryWriter(log_dir=str(self.out_dir)) as writer:
@@ -125,7 +125,7 @@ class TrainingRunner:
                         self.gan_optimizer.run_epoch(it, ctx)
 
                     self.save_image_sample(ctx)
-                    self.calculate_inception_score(ctx)
+                    self.log_inception_score(ctx)
                     self.save_snapshot(ctx, self.out_dir / 'current.snapshot')
 
                     if e > 0 and e % self.permanent_snapshot_period == 0:
@@ -134,17 +134,26 @@ class TrainingRunner:
                 if self.gan_optimizer is not None:
                     self.gan_optimizer.end_training()
 
+    def evaluate(self):
+        size = 100000
+        score, std = self.get_inception_score(size=size)
+        print(f'Inception Score: {score:.3f} +- {std / (size ** 0.5):.3f}')
+
     def save_image_sample(self, context):
         sample = self.sample_images()
         context.add_image_batch('Generated Images', sample)
 
-    def calculate_inception_score(self, context):
-        self.gen.train(False)
-        dataset = generated_images_dataset(self.gen)
-        score, std = inception_score(dataset)
-        self.gen.train(True)
+    def log_inception_score(self, context):
+        score, std = self.get_inception_score()
         context.add_scalar('score/inception', score, epoch=True)
         context.add_scalar('score/inception_std', std, epoch=True)
+
+    def get_inception_score(self, size=1000):
+        self.gen.train(False)
+        dataset = generated_images_dataset(self.gen, size=size)
+        score, std = inception_score(dataset)
+        self.gen.train(True)
+        return score, std
 
     def save_snapshot(self, context, target):
         snapshot = target
@@ -155,8 +164,8 @@ class TrainingRunner:
 
         torch.save({
             'epoch': context.epoch,
-            'gen': self.gen,
-            'dsc': self.dsc
+            'gen': self.gen.cpu(),
+            'dsc': self.dsc.cpu()
         }, snapshot)
 
         if snapshot_backup.exists():
@@ -167,8 +176,8 @@ class TrainingRunner:
 
         data = torch.load(str(path))
 
-        self.gen = data['gen']
-        self.dsc = data['dsc']
+        self.gen = self.convert(data['gen'])
+        self.dsc = self.convert(data['dsc'])
         self.start_epoch = data['epoch']
         self.out_dir = dir
 

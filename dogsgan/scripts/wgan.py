@@ -1,8 +1,11 @@
 import argparse
+from pathlib import Path
 
 from dogsgan.data.dogs import create_dogs_dataset
 from dogsgan.training.optimizers import WGANOptimizer
 from dogsgan.training.runner import TrainingRunner
+
+from dogsgan.scripts.util import execute
 
 import dogsgan.models.dogs as dogs
 
@@ -15,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--base_dim', type=int, default=128, help='base dimension')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size')
     parser.add_argument('--load_from', type=str, default=None, help='directory to load from')
+    parser.add_argument('--mode', type=str, default='train', help='mode train or evaluate')
 
     args = parser.parse_args()
     lr = args.lr
@@ -23,12 +27,10 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     load_from = args.load_from
     clip = args.clip
+    mode = args.mode
 
     runner = TrainingRunner('wgan', create_dogs_dataset(),
                             dogs.Generator(noise_dim=noise_dim, base_dim=base_dim, affine=False),
                             dogs.Discriminator(base_dim=base_dim, affine=False, clip_size=clip), WGANOptimizer(lr=lr), args=args)
 
-    if load_from is not None:
-        runner.load_snapshot(load_from)
-
-    runner.run(batch_size=batch_size)
+    execute(runner, load_from=load_from, mode=mode, batch_size=batch_size)

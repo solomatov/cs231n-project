@@ -16,4 +16,4 @@ if __name__ == '__main__':
             dogs.Discriminator(base_dim=base_dim),
             VanillaGANOptimizer(dsc_lr=lr, gen_lr=lr))
 
-        runner.run(epochs=100)
+        runner.train(epochs=100)

@@ -124,7 +124,7 @@ class TrainingRunner:
                         it = ((self.convert(x[0]), one_hot(x[1])) for x in iterable)
                         self.gan_optimizer.run_epoch(it, ctx)
 
-                    self.save_image_sample(ctx)
+                    self.log_image_sample(ctx)
                     self.log_inception_score(ctx)
                     self.save_snapshot(ctx, self.out_dir / 'current.snapshot')
 
@@ -139,7 +139,53 @@ class TrainingRunner:
         score, std = self.get_inception_score(size=size)
         print(f'Inception Score: {score:.3f} +- {std / (size ** 0.5):.3f}')
 
-    def save_image_sample(self, context):
+    def evaluate_all(self, path):
+        best = None
+        best_score = None
+
+        image_target = path / 'samples'
+        image_target.mkdir(parents=True, exist_ok=True)
+
+        for p in sorted(path.glob('*.snapshot')):
+            print(f'evaluating {p}...')
+            self.load_snapshot(p)
+            score, _ = self.get_inception_score(10000)
+            print(f'score is {score:.3f}')
+
+            sample = self.sample_images()
+            sample_image = torchvision.utils.make_grid(sample, normalize=True, scale_each=True)
+            torchvision.utils.save_image(sample_image, str(image_target / f'{p.name}.jpeg'))
+
+            if best is None or best_score < score:
+                best = p
+                best_score = score
+
+            print()
+
+        if best is None:
+            print(f'No snapshots were found')
+            return
+
+        print(f'Best model is {best}. Best score is {best_score:.3f}')
+
+    def execute(self, args):
+        load_from = args.load_from
+        mode = args.mode
+        batch_size = args.batch_size
+
+        if load_from is not None and mode != 'eval-all':
+            self.load_snapshot(Path(load_from / 'current.snapshot'))
+
+        if mode == 'train':
+            self.train(batch_size=batch_size)
+        elif mode == 'eval':
+            self.evaluate()
+        elif mode == 'eval-all':
+            self.evaluate_all(Path(load_from))
+        else:
+            raise Exception(f'Unknown mode {mode}')
+
+    def log_image_sample(self, context):
         sample = self.sample_images()
         context.add_image_batch('Generated Images', sample)
 
@@ -171,9 +217,7 @@ class TrainingRunner:
         if snapshot_backup.exists():
             snapshot_backup.unlink()
 
-    def load_snapshot(self, dir):
-        path = dir / 'current.snapshot'
-
+    def load_snapshot(self, path):
         data = torch.load(str(path))
 
         self.gen = self.convert(data['gen'])

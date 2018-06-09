@@ -4,8 +4,6 @@ from dogsgan.data.dogs import create_dogs_dataset
 from dogsgan.training.optimizers import VanillaGANOptimizer
 from dogsgan.training.runner import TrainingRunner
 
-from dogsgan.scripts.util import execute
-
 import dogsgan.models.dogs as dogs
 
 if __name__ == '__main__':
@@ -22,10 +20,7 @@ if __name__ == '__main__':
     lr = args.lr
     noise_dim = args.noise_dim
     base_dim = args.base_dim
-    batch_size = args.batch_size
-    load_from = args.load_from
     loss = args.loss
-    mode = args.mode
 
     opt = VanillaGANOptimizer()
     runner = TrainingRunner(
@@ -33,5 +28,4 @@ if __name__ == '__main__':
         dogs.Generator(base_dim=base_dim, noise_dim=noise_dim),
         dogs.Discriminator(base_dim=base_dim),
         VanillaGANOptimizer(dsc_lr=lr, gen_lr=lr, loss=loss), args=args)
-
-    execute(runner, load_from=load_from, mode=mode, batch_size=batch_size)
+    runner.execute(args)

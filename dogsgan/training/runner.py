@@ -142,6 +142,7 @@ class TrainingRunner:
     def evaluate_all(self, path):
         best = None
         best_score = None
+        best_std = None
 
         image_target = path / 'samples'
         image_target.mkdir(parents=True, exist_ok=True)
@@ -149,8 +150,8 @@ class TrainingRunner:
         for p in sorted(path.glob('*.snapshot')):
             print(f'evaluating {p}...')
             self.load_snapshot(p)
-            score, _ = self.get_inception_score(10000)
-            print(f'score is {score:.3f}')
+            score, std = self.get_inception_score(10000)
+            print(f'score is {score:.3f} +- {std:.3f}')
 
             sample = self.sample_images()
             sample_image = torchvision.utils.make_grid(sample, normalize=True, scale_each=True)
@@ -159,6 +160,7 @@ class TrainingRunner:
             if best is None or best_score < score:
                 best = p
                 best_score = score
+                best_std = std
 
             print()
 
@@ -166,7 +168,7 @@ class TrainingRunner:
             print(f'No snapshots were found')
             return
 
-        print(f'Best model is {best}. Best score is {best_score:.3f}')
+        print(f'Best model is {best}. Best score is {best_score:.3f} +- {best_std:.3f}')
 
     def execute(self, args):
         load_from = args.load_from

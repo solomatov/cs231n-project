@@ -176,7 +176,7 @@ class TrainingRunner:
         batch_size = args.batch_size
 
         if load_from is not None and mode != 'eval-all':
-            self.load_snapshot(Path(load_from / 'current.snapshot'))
+            self.load_snapshot(Path(load_from) / 'current.snapshot')
 
         if mode == 'train':
             self.train(batch_size=batch_size)
@@ -225,7 +225,7 @@ class TrainingRunner:
         self.gen = self.convert(data['gen'])
         self.dsc = self.convert(data['dsc'])
         self.start_epoch = data['epoch']
-        self.out_dir = dir
+        self.out_dir = path.parent
 
     def convert(self, data):
         result = data.to(self.device)
